@@ -37,7 +37,7 @@ public class OpenIdConstants {
      * get
      * https://login.netease.com/download/oidc_docs/flow/userinfo_request.html
      */
-    public static final String USER_INFO_ENDPOINT = "https://login.netease.com//connect/userinfo";
+    public static final String USER_INFO_ENDPOINT = "https://login.netease.com/connect/userinfo";
 
 
     public static final String LOGIN_BASE_URL = "https://login.netease.com/connect/authorize";

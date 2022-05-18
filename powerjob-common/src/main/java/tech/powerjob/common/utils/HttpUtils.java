@@ -1,8 +1,10 @@
 package tech.powerjob.common.utils;
 
 import lombok.SneakyThrows;
-import tech.powerjob.common.exception.PowerJobException;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
+import tech.powerjob.common.exception.PowerJobException;
+import tech.powerjob.common.serialize.JsonUtils;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
  * @author tjq
  * @since 2020/4/6
  */
+@Slf4j
 public class HttpUtils {
 
     private HttpUtils() {
@@ -74,6 +77,7 @@ public class HttpUtils {
                     return body.string();
                 }
             }
+            log.error("fail to execute http request,request:{},rtnCode:{},rtnBody:{}]", JsonUtils.toJSONString(request), responseCode, response.body() == null ? null : response.body().toString());
             throw new PowerJobException(String.format("http request failed,code=%d", responseCode));
         }
     }
