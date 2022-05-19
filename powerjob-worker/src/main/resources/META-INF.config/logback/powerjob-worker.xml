@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+
+    <!-- PROPERTIES -->
+    <!-- 模块名 -->
+    <property name="MODULE_NAME" value="powerjob-worker"/>
+    <!-- 引入配置协调文件 -->
+    <include resource="META-INF/config/logback/${MODULE_NAME}-tuning.xml"/>
+    <!--/ PROPERTIES -->
+
+    <!-- SPRING MODULE -->
+    <appender name="${MODULE_NAME}"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${MODULE_LOG_HOME}/${MODULE_NAME}.log</file>
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>
+                ${MODULE_LOG_HOME}/${MODULE_NAME}.log.${${MODULE_NAME}.appender.rollingPolicy.datePattern:-%d{yyyy-MM-dd}}
+            </fileNamePattern>
+            <maxHistory>${${MODULE_NAME}.appender.rollingPolicy.maxHistory:-30}
+            </maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${${MODULE_NAME}.appender.encoder.pattern:-%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level
+                %logger{40} - %msg%n}
+            </pattern>
+            <charset>${${MODULE_NAME}.appender.encoder.charset:-UTF-8}
+            </charset>
+            <ImmediateFlush>${${MODULE_NAME}.appender.encoder.immediateFlush:-true}
+            </ImmediateFlush>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${${MODULE_NAME}.appender.filter.level:-INFO}
+            </level>
+        </filter>
+    </appender>
+
+    <logger name="tech.powerjob" level="${${MODULE_NAME}.logger.level:-INFO}"
+            additivity="${${MODULE_NAME}.logger.additivity:-false}">
+        <appender-ref ref="${MODULE_NAME}"/>
+    </logger>
+    <logger name="com.dangdang" level="${${MODULE_NAME}.logger.level:-INFO}"
+            additivity="${${MODULE_NAME}.logger.additivity:-false}">
+        <appender-ref ref="${MODULE_NAME}"/>
+    </logger>
+    <!--/ SPRING MODULE -->
+
+</included>

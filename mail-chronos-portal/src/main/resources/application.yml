@@ -13,8 +13,9 @@ server:
   tomcat:
     accesslog:
       enabled: true
-      pattern: '%h %l %u %t "%r" %s %b %{X-Forwarded-For}i %D'
+      pattern: '%h %l %u %t "%r" %s %b %{X-Forwarded-For}i %{User-Agent}i %D'
       directory: /home/tomcat/logs
+      file-date-format: .yyyy-MM-dd
 
 management:
   server:

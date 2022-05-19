@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+
+    <if condition='p("FLAT_LOG_DIR").equals("true")'><!--/ 判断是否使用扁平的日志目录结构 -->
+        <then>
+            <property name="MODULE_LOG_HOME" value="${LOG_HOME}"/>
+        </then>
+        <else>
+            <property name="MODULE_LOG_HOME" value="${LOG_HOME}/${MODULE_NAME}"/>
+        </else>
+    </if>
+    <if condition='isDefined("LOG_ENV")'><!--/ 判定日志输出环境 -->
+        <then>
+            <define name="PROP_EXISTS"
+                    class="ch.qos.logback.core.property.ResourceExistsPropertyDefiner">
+                <resource>META-INF/config/logback/${MODULE_NAME}-${LOG_ENV}.properties
+                </resource>
+            </define>
+            <if condition='p("PROP_EXISTS").equals("true")'>
+                <then>
+                    <property
+                            resource="META-INF/config/logback/${MODULE_NAME}-${LOG_ENV}.properties"
+                            scope="context"/>
+                </then>
+            </if>
+        </then>
+    </if>
+
+</included>

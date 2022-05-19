@@ -6,7 +6,7 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <!-- Configuration for console. -->
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
-
+    <include resource="META-INF/config/logback/powerjob-worker.xml"/>
     <!--
         Log path, pay attention to permission, logs may be unable to generate.
         Bug recording: Setting `~/logs`, is unable to create folder in user home directory,

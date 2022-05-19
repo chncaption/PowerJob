@@ -4,7 +4,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import tech.powerjob.common.exception.PowerJobException;
-import tech.powerjob.common.serialize.JsonUtils;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -77,8 +76,8 @@ public class HttpUtils {
                     return body.string();
                 }
             }
-            log.error("fail to execute http request,request:{},rtnCode:{},rtnBody:{}]", JsonUtils.toJSONString(request), responseCode, response.body() == null ? null : response.body().toString());
-            throw new PowerJobException(String.format("http request failed,code=%d", responseCode));
+            log.error("fail to execute http request,request:{},rtnCode:{},rtnBody:{}]", request, responseCode, response.body() == null ? null : response.body().string());
+            throw new PowerJobException(String.format("http request failed,url=%s,code=%d",request.url().toString(), responseCode));
         }
     }
 
