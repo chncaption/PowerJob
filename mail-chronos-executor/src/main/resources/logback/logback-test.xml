@@ -6,7 +6,6 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <!-- Configuration for console. -->
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
-    <include resource="META-INF/config/logback/powerjob-worker.xml"/>
     <!--
         Log path, pay attention to permission, logs may be unable to generate.
         Bug recording: Setting `~/logs`, is unable to create folder in user home directory,
@@ -33,11 +32,11 @@
     </appender>
     <!-- End of configuration for ERROR logs. -->
 
-    <!-- Configuration for Web services. -->
-    <appender name="WEB_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/chronos-executor-web.log</file>
+    <!-- Configuration for chronos worker services. -->
+    <appender name="WORKER_LOG_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/chronos-executor-worker.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${LOG_PATH}/chronos-executor-web.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>${LOG_PATH}/chronos-executor-worker.%d{yyyy-MM-dd}.log</FileNamePattern>
             <MaxHistory>7</MaxHistory>
         </rollingPolicy>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
@@ -46,8 +45,8 @@
         </encoder>
         <append>true</append>
     </appender>
-    <logger name="WEB_LOG" level="INFO" additivity="false">
-        <appender-ref ref="WEB_LOG_APPENDER"/>
+    <logger name="tech.powerjob" level="INFO" additivity="false">
+        <appender-ref ref="WORKER_LOG_APPENDER"/>
     </logger>
     <!-- End of configuration for Web services. -->
 

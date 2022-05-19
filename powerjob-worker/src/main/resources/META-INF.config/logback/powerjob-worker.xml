@@ -39,10 +39,6 @@
             additivity="${${MODULE_NAME}.logger.additivity:-false}">
         <appender-ref ref="${MODULE_NAME}"/>
     </logger>
-    <logger name="com.dangdang" level="${${MODULE_NAME}.logger.level:-INFO}"
-            additivity="${${MODULE_NAME}.logger.additivity:-false}">
-        <appender-ref ref="${MODULE_NAME}"/>
-    </logger>
     <!--/ SPRING MODULE -->
 
 </included>
