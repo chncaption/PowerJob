@@ -109,6 +109,11 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>org.cylee.commons</groupId>
+            <artifactId>commons-httpclient</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>com.netease.mail.mp</groupId>
             <artifactId>mp-api-notify</artifactId>
             <version>1.2.0-SNAPSHOT</version>

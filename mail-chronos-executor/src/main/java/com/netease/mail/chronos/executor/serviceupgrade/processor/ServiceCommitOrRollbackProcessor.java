@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.netease.mail.chronos.base.exception.BaseException;
 import com.netease.mail.chronos.context.common.constants.BizParamKeyConstant;
+import com.netease.mail.chronos.context.common.enums.AccountTypeEnum;
 import com.netease.mail.chronos.context.srvupgrade.ServUpgradeParam;
 import com.netease.mail.chronos.executor.serviceupgrade.util.SignUtils;
 import com.netease.mail.quark.status.StatusResult;
@@ -25,6 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.netease.mail.chronos.executor.constant.HttpConstant.HTTP_SUCCESS_CODE;
+import static com.netease.mail.chronos.executor.constant.HttpConstant.TIMEOUT;
+
 /**
  * @author Echo009
  * @since 2022/1/6
@@ -45,10 +49,6 @@ public class ServiceCommitOrRollbackProcessor implements BasicProcessor {
     private static final String COMMIT_PATH = "/s/commit";
 
     private static final String ROLLBACK_PATH = "/s/rollback";
-
-    private static final int TIMEOUT = 60;
-
-    private static final int HTTP_SUCCESS_CODE = 200;
 
 
     @Override
@@ -147,6 +147,18 @@ public class ServiceCommitOrRollbackProcessor implements BasicProcessor {
                 HashMap<String, ServUpgradeParam> realParam = JSON.parseObject(paramStr, new TypeReference<HashMap<String, ServUpgradeParam>>() {
                 });
                 param = realParam.get(targetResource);
+                // 先检查内置参数是否包含了账户信息
+                if(StringUtils.isBlank(param.getParam().getAccount())){
+                    // 兼容在最外围传递账号的情况
+                    AccountTypeEnum accountType = AccountTypeEnum.getByCodeOrDefault(param.getAccountType());
+                    String account = data.get(accountType.getKey());
+                    if (StringUtils.isBlank(account)){
+                        omsLogger.error("缺失升降级需要处理的账户参数信息! 原始参数信息:{}", taskContext.getInstanceParams());
+                        throw new BaseException("从任务实例参数中解析服务升降级参数失败");
+                    }
+                    omsLogger.info("从上下文通用域中获取需要处理的账号，account:{}", account);
+                    param.getParam().setAccount(account);
+                }
             } catch (Exception e) {
                 // ignore
             }

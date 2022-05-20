@@ -16,7 +16,9 @@ public class ApiParam {
     private Integer strategy;
 
     private String resource;
-
+    /**
+     * 需要处理的账号，非必填
+     */
     private String account;
     /**
      * only for commit

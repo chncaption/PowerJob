@@ -1,5 +1,6 @@
 package com.netease.mail.chronos.context.srvupgrade;
 
+import com.netease.mail.chronos.context.common.enums.AccountTypeEnum;
 import lombok.Data;
 import lombok.experimental.Accessors;
 /**
@@ -21,6 +22,12 @@ public class ServUpgradeParam {
      * 操作资源的参数
      */
     private ApiParam param;
+
+    /**
+     * 处理的账号类型，非必填
+     * @see AccountTypeEnum
+     */
+    private String accountType;
 
 
 
