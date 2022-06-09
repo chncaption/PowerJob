@@ -46,4 +46,4 @@ notify:
     url: mpserv-notify.qzgw.163.internal
 
 srvupgrade:
-  baseUrl: http://10.110.47.87:18089
+  baseUrl: http://gw.mp.lvs.internal/mailsrv-srvupgrade
