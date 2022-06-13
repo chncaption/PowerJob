@@ -22,7 +22,7 @@ public class RemindTask {
     private String colId;
     /**
      * 组件 ID
-     *
+     * <p>
      * 注意: compId 需保证唯一
      */
     private String compId;
@@ -59,6 +59,8 @@ public class RemindTask {
     private String param;
     /**
      * 其他信息，预留
+     * 1、EXDATE 排除的日期 或者 时间点  , https://datatracker.ietf.org/doc/html/rfc5545#section-3.8.5.1
+     * --- net.fortuna.ical4j.model.property.ExDate ----
      */
     private Map<String, Object> extra;
 
@@ -73,9 +75,6 @@ public class RemindTask {
     private Long endTime;
 
     private Integer timesLimit;
-
-
-
 
 
 }

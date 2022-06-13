@@ -1,11 +1,16 @@
 package com.netease.mail.chronos.executor.support.common;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.netease.mail.chronos.base.utils.ICalendarRecurrenceRuleUtil;
 import com.netease.mail.chronos.executor.support.entity.SpRemindTaskInfo;
 import com.netease.mail.chronos.executor.support.entity.SpRtTaskInstance;
+import com.netease.mail.quark.commons.serialization.JacksonUtils;
+import net.fortuna.ical4j.model.Property;
+import org.apache.commons.lang.StringUtils;
 import tech.powerjob.worker.log.OmsLogger;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author Echo009
@@ -16,13 +21,15 @@ public class CommonLogic {
 
     public static void updateTriggerTime(OmsLogger omsLogger, SpRemindTaskInfo spRemindTaskInfo) {
         try {
-            // 更新 nextTriggerTime , 不处理 miss fire 的情形 ？
-            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), System.currentTimeMillis());
+            // support EXDATE
+            final String exDateStr = parseExDateStr(spRemindTaskInfo.getExtra());
+            // 更新 nextTriggerTime , 不处理 miss fire 的情形 （从业务场景上来说，没有必要）
+            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), System.currentTimeMillis(), exDateStr);
             // 检查生命周期
             handleLifeCycle(spRemindTaskInfo, nextTriggerTime);
         } catch (Exception e) {
             // 记录异常信息
-            omsLogger.error("处理任务(id:{},colId:{},compId:{})失败，计算下次触发时间失败，已将其自动禁用，请检查重复规则表达式是否合法！recurrenceRule:{}", spRemindTaskInfo.getId(), spRemindTaskInfo.getColId(),spRemindTaskInfo.getCompId(), spRemindTaskInfo.getRecurrenceRule(), e);
+            omsLogger.error("处理任务(id:{},colId:{},compId:{})失败，计算下次触发时间失败，已将其自动禁用，请检查重复规则表达式是否合法！recurrenceRule:{}", spRemindTaskInfo.getId(), spRemindTaskInfo.getColId(), spRemindTaskInfo.getCompId(), spRemindTaskInfo.getRecurrenceRule(), e);
             disableTask(spRemindTaskInfo);
         }
     }
@@ -47,11 +54,25 @@ public class CommonLogic {
     }
 
 
-    public static void disableInstance(SpRtTaskInstance spRtTaskInstance){
+    public static void disableInstance(SpRtTaskInstance spRtTaskInstance) {
         spRtTaskInstance.setEnable(false);
         spRtTaskInstance.setUpdateTime(new Date());
     }
 
+
+    public static String parseExDateStr(String extra) {
+        if (StringUtils.isBlank(extra)) {
+            return null;
+        }
+        try {
+            final Map<String, Object> map = JacksonUtils.deserialize(extra, new TypeReference<Map<String, Object>>() {
+            });
+            return (String) map.get(Property.EXDATE);
+        } catch (Exception ignore) {
+            // ignore
+            return "";
+        }
+    }
 
 
 }

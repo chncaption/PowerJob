@@ -17,7 +17,9 @@ import com.netease.mail.chronos.portal.vo.RemindTaskVo;
 import com.netease.mail.quark.commons.serialization.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.Recur;
+import net.fortuna.ical4j.model.property.ExDate;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -157,10 +159,10 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
                 .setNextTriggerTime(nextTriggerTime);
         handleIllegalTask(spRemindTaskInfo);
         // locale
-        if(task.getLocale() == null){
+        if (task.getLocale() == null) {
             task.setLocale(Locale.CHINA);
         }
-        extra.put("locale",task.getLocale().toString());
+        extra.put("locale", task.getLocale().toString());
         spRemindTaskInfo.setExtra(JacksonUtils.toString(extra));
         return spRemindTaskInfo;
     }
@@ -243,6 +245,22 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
             task.setTriggerOffsets(Collections.singletonList(0L));
         }
 
+        // 检查 extra 中的 EXDATE 信息是否合法
+        if (!CollectionUtils.isEmpty(task.getExtra())) {
+            try {
+                val exdateStr = (String) task.getExtra().get(Property.EXDATE);
+                if (StringUtils.isBlank(exdateStr)) {
+                    return;
+                }
+                //
+                final ExDate exDate = new ExDate();
+                exDate.setValue(exdateStr);
+                exDate.validate();
+            } catch (Exception e) {
+                log.warn("[opt:checkBaseProperties,msg:无效的 EXDATE!,task:{}]", JacksonUtils.toString(task));
+                throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "EXDATE 非法！");
+            }
+        }
     }
 
 
@@ -275,7 +293,12 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
             }
             return next;
         }
-        long nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now);
+        long nextValidTimeAfter;
+        if (!CollectionUtils.isEmpty(task.getExtra()) && StringUtils.isNotBlank((String) task.getExtra().get(Property.EXDATE))) {
+            nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now, (String) task.getExtra().get(Property.EXDATE));
+        } else {
+            nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now);
+        }
         // 等于 0 表示不存在下一次触发时间
         if (nextValidTimeAfter == 0L) {
             // 不存在下一次调度时间
