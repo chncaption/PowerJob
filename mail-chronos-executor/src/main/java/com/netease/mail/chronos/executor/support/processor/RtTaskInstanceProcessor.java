@@ -62,21 +62,21 @@ public class RtTaskInstanceProcessor implements MapProcessor {
 
     @Override
     public ProcessResult process(TaskContext context) throws Exception {
-        OmsLogger omsLogger = context.getOmsLogger();
+        OmsLogger log = context.getOmsLogger();
         TaskSplitParam taskSplitParam = TaskSplitParam.parseOrDefault(context.getJobParams(),BATCH_SIZE,MAX_SIZE);
         if (isRootTask()) {
             List<TaskInstancePrimaryKey> taskInstancePrimaryKeys = spTaskInstanceHandleService.loadHandleInstanceIdList(taskSplitParam.getMaxSize());
             if (taskInstancePrimaryKeys == null || taskInstancePrimaryKeys.isEmpty()) {
-                omsLogger.info("本次没有需要处理的提醒任务实例! ");
+                log.info("本次没有需要处理的提醒任务实例! ");
                 return new ProcessResult(true, "本次没有需要处理的提醒任务实例");
             }
             // 小于阈值直接执行
             if (taskInstancePrimaryKeys.size() <= taskSplitParam.getBatchSize()) {
-                omsLogger.info("本次无需进行任务分片! 一共 {} 条", taskInstancePrimaryKeys.size());
-                processCore(0, taskInstancePrimaryKeys, omsLogger);
+                log.info("本次无需进行任务分片! 一共 {} 条", taskInstancePrimaryKeys.size());
+                processCore(0, taskInstancePrimaryKeys, log);
                 return new ProcessResult(true, "任务不需要分片,处理成功!");
             }
-            omsLogger.info("开始切分任务! batchSize:{}", taskSplitParam.getBatchSize());
+            log.info("开始切分任务! batchSize:{}", taskSplitParam.getBatchSize());
             List<RtTaskInstanceProcessor.SubTask> subTaskList = new LinkedList<>();
             // 切割任务
             List<List<TaskInstancePrimaryKey>> idListList = CollUtil.split(taskInstancePrimaryKeys, taskSplitParam.getBatchSize());
@@ -91,16 +91,16 @@ public class RtTaskInstanceProcessor implements MapProcessor {
 
         } else {
             RtTaskInstanceProcessor.SubTask subTask = (RtTaskInstanceProcessor.SubTask) context.getSubTask();
-            omsLogger.info("开始处理任务分片 {},size:{}", subTask.getSeq(), subTask.getIdList().size());
+            log.info("开始处理任务分片 {},size:{}", subTask.getSeq(), subTask.getIdList().size());
             List<TaskInstancePrimaryKey> idList = subTask.getIdList();
-            processCore(subTask.getSeq(), idList, omsLogger);
-            omsLogger.info("处理任务分片({})成功,size:{}", subTask.getSeq(), subTask.getIdList().size());
+            processCore(subTask.getSeq(), idList, log);
+            log.info("处理任务分片({})成功,size:{}", subTask.getSeq(), subTask.getIdList().size());
             return new ProcessResult(true, "处理任务分片(" + subTask.getSeq() + ")成功!");
         }
     }
 
     @SuppressWarnings("squid:S3776")
-    private void processCore(int sliceSeq, List<TaskInstancePrimaryKey> idList, OmsLogger omsLogger) {
+    private void processCore(int sliceSeq, List<TaskInstancePrimaryKey> idList, OmsLogger log) {
         // 新版本的 feign 会去掉 {} 故不能传空对象
         UaInfoContext.setUaInfo(FAKE_UA);
         int errorCount = 0;
@@ -109,7 +109,7 @@ public class RtTaskInstanceProcessor implements MapProcessor {
             try {
                 spRtTaskInstance = spTaskInstanceHandleService.selectByPrimaryKey(id);
                 // 判断是否需要跳过
-                if (shouldSkip(omsLogger, spRtTaskInstance)) {
+                if (shouldSkip(log, spRtTaskInstance)) {
                     // 更新状态为禁用
                     if (spRtTaskInstance != null) {
                         disableInstance(spRtTaskInstance);
@@ -122,14 +122,14 @@ public class RtTaskInstanceProcessor implements MapProcessor {
                     spRtTaskInstance.setActualTriggerTime(System.currentTimeMillis());
                 }
                 // 处理
-                boolean res = notifyService.sendNotify(spRtTaskInstance, omsLogger);
+                boolean res = notifyService.sendNotify(spRtTaskInstance, log);
                 // 记录完成时间
                 spRtTaskInstance.setFinishedTime(System.currentTimeMillis());
                 // 更新状态
                 spRtTaskInstance.setStatus(res ? RtTaskInstanceStatus.SUCCESS.getCode() : RtTaskInstanceStatus.FAILED.getCode());
             } catch (Exception e) {
                 // 数据库异常 或者 网络异常
-                omsLogger.error("处理任务(id:{})失败 ！", id, e);
+                log.error("处理任务(id:{})失败 ！", id, e);
                 errorCount++;
                 if (spRtTaskInstance != null) {
                     spRtTaskInstance.setResult(ExceptionUtil.getExceptionDesc(e));
@@ -146,29 +146,29 @@ public class RtTaskInstanceProcessor implements MapProcessor {
             }
         }
         if (errorCount != 0) {
-            omsLogger.info("处理任务分片({})失败,total:{},failure:{}", sliceSeq, idList.size(), errorCount);
+            log.info("处理任务分片({})失败,total:{},failure:{}", sliceSeq, idList.size(), errorCount);
             throw new BaseException("任务分片处理失败,seq:" + sliceSeq);
         }
     }
 
 
-    private boolean shouldSkip(OmsLogger omsLogger, SpRtTaskInstance spRtTaskInstance) {
+    private boolean shouldSkip(OmsLogger log, SpRtTaskInstance spRtTaskInstance) {
         if (spRtTaskInstance == null) {
             return true;
         }
         if (spRtTaskInstance.getStatus() != null && spRtTaskInstance.getStatus().equals(RtTaskInstanceStatus.SUCCESS.getCode())) {
-            omsLogger.warn("提醒任务实例(id:{},compId:{},expectedTriggerTime:{}) 已执行成功，跳过处理", spRtTaskInstance.getId(), spRtTaskInstance.getCustomId(), spRtTaskInstance.getExpectedTriggerTime());
+            log.warn("提醒任务实例(id:{},compId:{},expectedTriggerTime:{}) 已执行成功，跳过处理", spRtTaskInstance.getId(), spRtTaskInstance.getCustomId(), spRtTaskInstance.getExpectedTriggerTime());
             return true;
         }
         if (spRtTaskInstance.getEnable() != null && !spRtTaskInstance.getEnable()) {
-            omsLogger.warn("提醒任务实例(id:{},compId:{},expectedTriggerTime:{}) 已经被禁用，跳过处理", spRtTaskInstance.getId(), spRtTaskInstance.getCustomId(), spRtTaskInstance.getExpectedTriggerTime());
+            log.warn("提醒任务实例(id:{},compId:{},expectedTriggerTime:{}) 已经被禁用，跳过处理", spRtTaskInstance.getId(), spRtTaskInstance.getCustomId(), spRtTaskInstance.getExpectedTriggerTime());
             return true;
         }
         // 检查是否已经超过最大重试次数
         if (spRtTaskInstance.getRunningTimes() != null
                 && spRtTaskInstance.getMaxRetryTimes() != null
                 && spRtTaskInstance.getRunningTimes() > spRtTaskInstance.getMaxRetryTimes()) {
-            omsLogger.warn("提醒任务实例(id:{},compId:{},expectedTriggerTime:{})已超过最大运行次数", spRtTaskInstance.getId(), spRtTaskInstance.getCustomId(), spRtTaskInstance.getExpectedTriggerTime());
+            log.warn("提醒任务实例(id:{},compId:{},expectedTriggerTime:{})已超过最大运行次数", spRtTaskInstance.getId(), spRtTaskInstance.getCustomId(), spRtTaskInstance.getExpectedTriggerTime());
             return true;
         }
         return false;

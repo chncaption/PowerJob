@@ -69,23 +69,22 @@ public class RemindTaskProcessor implements MapProcessor {
      */
     @Override
     public ProcessResult process(TaskContext context) throws Exception {
-        OmsLogger omsLogger = context.getOmsLogger();
         TaskSplitParam taskSplitParam = TaskSplitParam.parseOrDefault(context.getJobParams(), BATCH_SIZE, MAX_SIZE);
         long maxTriggerTime = System.currentTimeMillis() + INTERVAL;
         if (isRootTask()) {
             // （-,maxTriggerTime),limit
             List<Long> idList = spRemindTaskService.obtainValidTaskIdListByTriggerTimeThreshold(maxTriggerTime, taskSplitParam.getMaxSize());
             if (idList == null || idList.isEmpty()) {
-                omsLogger.info("本次没有需要触发的提醒任务! maxTriggerTime:{} , limit:{}", maxTriggerTime, taskSplitParam.getMaxSize());
+                log.info("本次没有需要触发的提醒任务! maxTriggerTime:{} , limit:{}", maxTriggerTime, taskSplitParam.getMaxSize());
                 return new ProcessResult(true, "本次没有需要触发的提醒任务");
             }
             // 小于阈值直接执行
             if (idList.size() <= taskSplitParam.getBatchSize()) {
-                omsLogger.info("本次无需进行任务分片! 一共 {} 条", idList.size());
-                processCore(0, idList, maxTriggerTime, omsLogger);
+                log.info("本次无需进行任务分片! 一共 {} 条", idList.size());
+                processCore(0, idList, maxTriggerTime, context.getOmsLogger());
                 return new ProcessResult(true, "任务不需要分片,处理成功!");
             }
-            omsLogger.info("开始切分任务! batchSize:{}", BATCH_SIZE);
+            log.info("开始切分任务! batchSize:{}", BATCH_SIZE);
             List<SubTask> subTaskList = new LinkedList<>();
             // 切割任务
             List<List<Long>> idListList = CollUtil.split(idList, BATCH_SIZE);
@@ -100,15 +99,15 @@ public class RemindTaskProcessor implements MapProcessor {
 
         } else {
             SubTask subTask = (SubTask) context.getSubTask();
-            omsLogger.info("开始处理任务分片 {},size:{}", subTask.getSeq(), subTask.getIdList().size());
+            log.info("开始处理任务分片 {},size:{}", subTask.getSeq(), subTask.getIdList().size());
             List<Long> idList = subTask.getIdList();
-            processCore(subTask.getSeq(), idList, maxTriggerTime, omsLogger);
-            omsLogger.info("处理任务分片({})成功,size:{}", subTask.getSeq(), subTask.getIdList().size());
+            processCore(subTask.getSeq(), idList, maxTriggerTime, context.getOmsLogger());
+            log.info("处理任务分片({})成功,size:{}", subTask.getSeq(), subTask.getIdList().size());
             return new ProcessResult(true, "处理任务分片(" + subTask.getSeq() + ")成功!");
         }
     }
 
-    private void processCore(int sliceSeq, List<Long> idList, long maxTriggerTime, OmsLogger omsLogger) {
+    private void processCore(int sliceSeq, List<Long> idList, long maxTriggerTime, OmsLogger log) {
 
         int errorCount = 0;
         long warnThreshold = System.currentTimeMillis() - INTERVAL;
@@ -116,7 +115,7 @@ public class RemindTaskProcessor implements MapProcessor {
             try {
                 SpRemindTaskInfo spRemindTaskInfo = spRemindTaskService.selectById(id);
                 // 判断是否需要跳过
-                if (shouldSkip(maxTriggerTime, omsLogger, spRemindTaskInfo)) {
+                if (shouldSkip(maxTriggerTime, log, spRemindTaskInfo)) {
                     continue;
                 }
                 // INTERVAL 之前的任务 现在才触发，打印日志，表示这个任务延迟太严重，正常情况下不应该出现
@@ -129,23 +128,24 @@ public class RemindTaskProcessor implements MapProcessor {
                 ExecuteUtil.executeIgnoreSpecifiedExceptionWithoutReturn(() -> spTaskInstanceHandleService.insert(construct), DuplicateKeyException.class);
                 // 更新状态
                 spRemindTaskInfo.setTriggerTimes(spRemindTaskInfo.getTriggerTimes() + 1);
+                log.info("更新任务({})触发次数 {} => {}", spRemindTaskInfo.getId(), spRemindTaskInfo.getTriggerTimes() - 1, spRemindTaskInfo.getTriggerTimes());
                 // 计算下次调度时间 , 理论上不应该会存在每分钟调度一次的提醒任务（业务场景决定）
                 String recurrenceRule = spRemindTaskInfo.getRecurrenceRule();
                 // 为空直接 disable (触发一次的任务)
                 if (StringUtils.isBlank(recurrenceRule)) {
                     disableTask(spRemindTaskInfo);
                 } else {
-                    updateTriggerTime(omsLogger, spRemindTaskInfo);
+                    updateTriggerTime(log, spRemindTaskInfo);
                 }
                 spRemindTaskInfo.setUpdateTime(new Date());
                 spRemindTaskService.updateById(spRemindTaskInfo);
             } catch (Exception e) {
-                omsLogger.error("处理任务(id:{})失败 ！", id, e);
+                log.error("处理任务(id:{})失败 ！", id, e);
                 errorCount++;
             }
         }
         if (errorCount != 0) {
-            omsLogger.info("处理任务分片({})失败,total:{},failure:{}", sliceSeq, idList.size(), errorCount);
+            log.info("处理任务分片({})失败,total:{},failure:{}", sliceSeq, idList.size(), errorCount);
             throw new BaseException("任务分片处理失败,seq:" + sliceSeq);
         }
     }
@@ -186,20 +186,20 @@ public class RemindTaskProcessor implements MapProcessor {
     }
 
 
-    private boolean shouldSkip(long maxTriggerTime, OmsLogger omsLogger, SpRemindTaskInfo spRemindTaskInfo) {
+    private boolean shouldSkip(long maxTriggerTime, OmsLogger log, SpRemindTaskInfo spRemindTaskInfo) {
 
         if (spRemindTaskInfo == null) {
             return true;
         }
 
         if (spRemindTaskInfo.getEnable() != null && !spRemindTaskInfo.getEnable()) {
-            omsLogger.warn("提醒任务(id:{},colId:{},compId:{}) 已经被禁用，跳过处理", spRemindTaskInfo.getId(), spRemindTaskInfo.getColId(), spRemindTaskInfo.getCompId());
+            log.warn("提醒任务(id:{},colId:{},compId:{}) 已经被禁用，跳过处理", spRemindTaskInfo.getId(), spRemindTaskInfo.getColId(), spRemindTaskInfo.getCompId());
             return true;
         }
         // 检查 nextTriggerTime 是否已经变更（重试需要保证幂等）
         if (spRemindTaskInfo.getNextTriggerTime() == null
                 || spRemindTaskInfo.getNextTriggerTime() >= maxTriggerTime) {
-            omsLogger.warn("提醒任务(id:{},colId:{},compId:{})本次调度已被成功处理过，跳过", spRemindTaskInfo.getId(), spRemindTaskInfo.getColId(), spRemindTaskInfo.getCompId());
+            log.warn("提醒任务(id:{},colId:{},compId:{})本次调度已被成功处理过，跳过", spRemindTaskInfo.getId(), spRemindTaskInfo.getColId(), spRemindTaskInfo.getCompId());
             return true;
         }
         return false;
