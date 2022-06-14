@@ -38,11 +38,11 @@ public class RemindTaskManageController {
      * 删除 任务
      */
     @DeleteMapping
-    public BaseResponse<List<RemindTaskVo>> delete(@RequestParam(required = false) String colId, @RequestParam(required = false) String compId) {
+    public BaseResponse<List<RemindTaskVo>> delete(@RequestParam String uid, @RequestParam(required = false) String colId, @RequestParam(required = false) String compId) {
         if (StringUtils.isBlank(colId) && StringUtils.isBlank(compId)) {
             throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "colId 和 compId 不能都为空");
         }
-        return BaseResponse.success(spRemindTaskManageService.delete(colId, compId));
+        return BaseResponse.success(spRemindTaskManageService.delete(uid, colId, compId));
     }
 
     /**
@@ -57,11 +57,11 @@ public class RemindTaskManageController {
      * 查询任务信息
      */
     @GetMapping
-    public BaseResponse<List<RemindTaskVo>> query(@RequestParam(required = false) String colId, @RequestParam(required = false) String compId) {
+    public BaseResponse<List<RemindTaskVo>> query(@RequestParam String uid, @RequestParam(required = false) String colId, @RequestParam(required = false) String compId) {
         if (StringUtils.isBlank(colId) && StringUtils.isBlank(compId)) {
             throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "colId 和 compId 不能都为空");
         }
-        return BaseResponse.success(spRemindTaskManageService.query(colId, compId));
+        return BaseResponse.success(spRemindTaskManageService.query(uid, colId, compId));
     }
 
 

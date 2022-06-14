@@ -22,11 +22,12 @@ public interface SpRemindTaskManageService {
     /**
      * 删除任务（物理删除）
      *
+     * @param uid    uid
      * @param colId  colId
      * @param compId compId
      * @return 被删除的任务信息
      */
-    List<RemindTaskVo> delete(String colId, String compId);
+    List<RemindTaskVo> delete(String uid, String colId, String compId);
 
     /**
      * 更新任务信息
@@ -40,11 +41,12 @@ public interface SpRemindTaskManageService {
     /**
      * 查询任务信息
      *
+     * @param uid    uid
      * @param colId  colId
      * @param compId compId
      * @return 任务信息
      */
-    List<RemindTaskVo> query(String colId, String compId);
+    List<RemindTaskVo> query(String uid, String colId, String compId);
 
 
 }

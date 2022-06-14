@@ -44,6 +44,7 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
 
     private static final String P_COL_NAME = "col_id";
     private static final String S_COL_NAME = "comp_id";
+    private static final String UID_COL_NAME = "uid";
 
     private static final Long MIN_INTERVAL = 60_000L;
 
@@ -84,18 +85,18 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
      */
     @Override
     @Transactional(value = "chronosSupportTransactionManager", rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
-    public List<RemindTaskVo> delete(String colId, String compId) {
-        log.info("[opt:delete,message:start,col:{},compId:{}]", colId, compId);
+    public List<RemindTaskVo> delete(String uid, String colId, String compId) {
+        log.info("[opt:delete,message:start,uid:{},col:{},compId:{}]", uid, colId, compId);
         List<SpRemindTaskInfo> deleteList;
         if (StringUtils.isNotBlank(compId)) {
             // 根据 compId 删除
-            deleteList = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(S_COL_NAME, compId));
+            deleteList = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(UID_COL_NAME, uid, S_COL_NAME, compId));
         } else {
-            deleteList = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(P_COL_NAME, colId));
+            deleteList = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(UID_COL_NAME, uid, P_COL_NAME, colId));
         }
 
         if (CollectionUtils.isEmpty(deleteList)) {
-            log.warn("[opt:delete,message:failed,task is not exist,col:{},compId:{}]", colId, compId);
+            log.warn("[opt:delete,message:failed,task is not exist,uid:{},col:{},compId:{}]", uid, colId, compId);
             return Collections.emptyList();
         }
         spRemindTaskInfoMapper.deleteBatchIds(deleteList.stream().map(SpRemindTaskInfo::getId).collect(Collectors.toList()));
@@ -103,7 +104,7 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
         for (SpRemindTaskInfo spRemindTaskInfo : deleteList) {
             res.add(SimpleBeanConvertUtil.convert(spRemindTaskInfo, RemindTaskVo.class));
         }
-        log.info("[opt:delete,message:success,col:{},compId:{},list:{}]", colId, compId, deleteList);
+        log.info("[opt:delete,message:success,uid:{},col:{},compId:{},list:{}]", uid, colId, compId, deleteList);
         return res;
     }
 
@@ -171,13 +172,13 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
      * 查询任务信息
      */
     @Override
-    public List<RemindTaskVo> query(String colId, String compId) {
+    public List<RemindTaskVo> query(String uid, String colId, String compId) {
         List<SpRemindTaskInfo> list;
         if (StringUtils.isNotBlank(compId)) {
             // 根据 compId 查询
-            list = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(S_COL_NAME, compId));
+            list = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(UID_COL_NAME, uid, S_COL_NAME, compId));
         } else {
-            list = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(P_COL_NAME, colId));
+            list = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(UID_COL_NAME, uid, P_COL_NAME, colId));
         }
 
         if (CollectionUtils.isEmpty(list)) {
