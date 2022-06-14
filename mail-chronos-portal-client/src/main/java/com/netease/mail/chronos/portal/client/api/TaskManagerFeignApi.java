@@ -55,12 +55,13 @@ public interface TaskManagerFeignApi {
     /**
      * 查询任务信息
      *
+     * @param uid    uid
      * @param colId  colId
      * @param compId compId
      * @return 任务信息
      */
     @GetMapping("/manage/remind_task")
-    BaseResponse<List<RemindTaskVo>> get(@RequestParam(value = "colId", required = false) String colId, @RequestParam(value = "compId", required = false) String compId);
+    BaseResponse<List<RemindTaskVo>> get(@RequestParam(value = "uid") String uid, @RequestParam(value = "colId", required = false) String colId, @RequestParam(value = "compId", required = false) String compId);
 
 
 }
