@@ -52,7 +52,7 @@ public class RemindTaskProcessor implements MapProcessor {
     /**
      * 间隙
      */
-    private static final Long INTERVAL = 90_000L;
+    private static final Long INTERVAL = 30_000L;
 
     private final Snowflake snowflake = IdUtil.getSnowflake();
 
@@ -63,7 +63,8 @@ public class RemindTaskProcessor implements MapProcessor {
 
     /**
      * 上层传递触发时间
-     * 根据触发时间获取 状态为有效，且下次触发时间小于当前时间 或 未来 90 s 内即将触发的任务
+     * 根据触发时间获取 状态为有效，且下次触发时间小于当前时间 或 未来 30 s 内即将触发的任务
+     * 注意，这也意味着重复触发的任务最小间隔为 30 s
      * 处理后后计算下次触发时间，更新状态
      */
     @Override
