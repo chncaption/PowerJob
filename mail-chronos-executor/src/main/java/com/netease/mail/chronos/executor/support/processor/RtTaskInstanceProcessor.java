@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import tech.powerjob.worker.core.processor.ProcessResult;
 import tech.powerjob.worker.core.processor.TaskContext;
 import tech.powerjob.worker.core.processor.sdk.MapProcessor;
-import tech.powerjob.worker.log.OmsLogger;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -62,7 +61,6 @@ public class RtTaskInstanceProcessor implements MapProcessor {
 
     @Override
     public ProcessResult process(TaskContext context) throws Exception {
-        OmsLogger log = context.getOmsLogger();
         TaskSplitParam taskSplitParam = TaskSplitParam.parseOrDefault(context.getJobParams(),BATCH_SIZE,MAX_SIZE);
         if (isRootTask()) {
             List<TaskInstancePrimaryKey> taskInstancePrimaryKeys = spTaskInstanceHandleService.loadHandleInstanceIdList(taskSplitParam.getMaxSize());
@@ -73,7 +71,7 @@ public class RtTaskInstanceProcessor implements MapProcessor {
             // 小于阈值直接执行
             if (taskInstancePrimaryKeys.size() <= taskSplitParam.getBatchSize()) {
                 log.info("本次无需进行任务分片! 一共 {} 条", taskInstancePrimaryKeys.size());
-                processCore(0, taskInstancePrimaryKeys, log);
+                processCore(0, taskInstancePrimaryKeys);
                 return new ProcessResult(true, "任务不需要分片,处理成功!");
             }
             log.info("开始切分任务! batchSize:{}", taskSplitParam.getBatchSize());
@@ -93,14 +91,14 @@ public class RtTaskInstanceProcessor implements MapProcessor {
             RtTaskInstanceProcessor.SubTask subTask = (RtTaskInstanceProcessor.SubTask) context.getSubTask();
             log.info("开始处理任务分片 {},size:{}", subTask.getSeq(), subTask.getIdList().size());
             List<TaskInstancePrimaryKey> idList = subTask.getIdList();
-            processCore(subTask.getSeq(), idList, log);
+            processCore(subTask.getSeq(), idList);
             log.info("处理任务分片({})成功,size:{}", subTask.getSeq(), subTask.getIdList().size());
             return new ProcessResult(true, "处理任务分片(" + subTask.getSeq() + ")成功!");
         }
     }
 
     @SuppressWarnings("squid:S3776")
-    private void processCore(int sliceSeq, List<TaskInstancePrimaryKey> idList, OmsLogger log) {
+    private void processCore(int sliceSeq, List<TaskInstancePrimaryKey> idList) {
         // 新版本的 feign 会去掉 {} 故不能传空对象
         UaInfoContext.setUaInfo(FAKE_UA);
         int errorCount = 0;
@@ -109,7 +107,7 @@ public class RtTaskInstanceProcessor implements MapProcessor {
             try {
                 spRtTaskInstance = spTaskInstanceHandleService.selectByPrimaryKey(id);
                 // 判断是否需要跳过
-                if (shouldSkip(log, spRtTaskInstance)) {
+                if (shouldSkip(spRtTaskInstance)) {
                     // 更新状态为禁用
                     if (spRtTaskInstance != null) {
                         disableInstance(spRtTaskInstance);
@@ -122,7 +120,7 @@ public class RtTaskInstanceProcessor implements MapProcessor {
                     spRtTaskInstance.setActualTriggerTime(System.currentTimeMillis());
                 }
                 // 处理
-                boolean res = notifyService.sendNotify(spRtTaskInstance, log);
+                boolean res = notifyService.sendNotify(spRtTaskInstance);
                 // 记录完成时间
                 spRtTaskInstance.setFinishedTime(System.currentTimeMillis());
                 // 更新状态
@@ -152,7 +150,7 @@ public class RtTaskInstanceProcessor implements MapProcessor {
     }
 
 
-    private boolean shouldSkip(OmsLogger log, SpRtTaskInstance spRtTaskInstance) {
+    private boolean shouldSkip(SpRtTaskInstance spRtTaskInstance) {
         if (spRtTaskInstance == null) {
             return true;
         }

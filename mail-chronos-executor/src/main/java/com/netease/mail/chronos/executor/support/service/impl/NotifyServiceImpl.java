@@ -34,7 +34,7 @@ public class NotifyServiceImpl implements NotifyService {
 
 
     @Override
-    public boolean sendNotify(SpRtTaskInstance spRtTaskInstance, OmsLogger omsLogger) {
+    public boolean sendNotify(SpRtTaskInstance spRtTaskInstance) {
         List<NotifyParamDTO> params = new ArrayList<>();
         HashMap<String, Object> originParams = JSON.parseObject(spRtTaskInstance.getParam(), new TypeReference<HashMap<String, Object>>() {
         });

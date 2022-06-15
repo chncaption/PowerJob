@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 import tech.powerjob.worker.core.processor.ProcessResult;
 import tech.powerjob.worker.core.processor.TaskContext;
 import tech.powerjob.worker.core.processor.sdk.MapProcessor;
-import tech.powerjob.worker.log.OmsLogger;
 
 import java.util.Date;
 import java.util.LinkedList;
@@ -81,7 +80,7 @@ public class RemindTaskProcessor implements MapProcessor {
             // 小于阈值直接执行
             if (idList.size() <= taskSplitParam.getBatchSize()) {
                 log.info("本次无需进行任务分片! 一共 {} 条", idList.size());
-                processCore(0, idList, maxTriggerTime, context.getOmsLogger());
+                processCore(0, idList, maxTriggerTime);
                 return new ProcessResult(true, "任务不需要分片,处理成功!");
             }
             log.info("开始切分任务! batchSize:{}", BATCH_SIZE);
@@ -101,13 +100,13 @@ public class RemindTaskProcessor implements MapProcessor {
             SubTask subTask = (SubTask) context.getSubTask();
             log.info("开始处理任务分片 {},size:{}", subTask.getSeq(), subTask.getIdList().size());
             List<Long> idList = subTask.getIdList();
-            processCore(subTask.getSeq(), idList, maxTriggerTime, context.getOmsLogger());
+            processCore(subTask.getSeq(), idList, maxTriggerTime);
             log.info("处理任务分片({})成功,size:{}", subTask.getSeq(), subTask.getIdList().size());
             return new ProcessResult(true, "处理任务分片(" + subTask.getSeq() + ")成功!");
         }
     }
 
-    private void processCore(int sliceSeq, List<Long> idList, long maxTriggerTime, OmsLogger log) {
+    private void processCore(int sliceSeq, List<Long> idList, long maxTriggerTime) {
 
         int errorCount = 0;
         long warnThreshold = System.currentTimeMillis() - INTERVAL;
@@ -115,7 +114,7 @@ public class RemindTaskProcessor implements MapProcessor {
             try {
                 SpRemindTaskInfo spRemindTaskInfo = spRemindTaskService.selectById(id);
                 // 判断是否需要跳过
-                if (shouldSkip(maxTriggerTime, log, spRemindTaskInfo)) {
+                if (shouldSkip(maxTriggerTime, spRemindTaskInfo)) {
                     continue;
                 }
                 // INTERVAL 之前的任务 现在才触发，打印日志，表示这个任务延迟太严重，正常情况下不应该出现
@@ -135,7 +134,7 @@ public class RemindTaskProcessor implements MapProcessor {
                 if (StringUtils.isBlank(recurrenceRule)) {
                     disableTask(spRemindTaskInfo);
                 } else {
-                    updateTriggerTime(log, spRemindTaskInfo);
+                    updateTriggerTime(spRemindTaskInfo);
                 }
                 spRemindTaskInfo.setUpdateTime(new Date());
                 spRemindTaskService.updateById(spRemindTaskInfo);
@@ -186,7 +185,7 @@ public class RemindTaskProcessor implements MapProcessor {
     }
 
 
-    private boolean shouldSkip(long maxTriggerTime, OmsLogger log, SpRemindTaskInfo spRemindTaskInfo) {
+    private boolean shouldSkip(long maxTriggerTime, SpRemindTaskInfo spRemindTaskInfo) {
 
         if (spRemindTaskInfo == null) {
             return true;

@@ -5,9 +5,9 @@ import com.netease.mail.chronos.base.utils.ICalendarRecurrenceRuleUtil;
 import com.netease.mail.chronos.executor.support.entity.SpRemindTaskInfo;
 import com.netease.mail.chronos.executor.support.entity.SpRtTaskInstance;
 import com.netease.mail.quark.commons.serialization.JacksonUtils;
+import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.model.Property;
 import org.apache.commons.lang.StringUtils;
-import tech.powerjob.worker.log.OmsLogger;
 
 import java.util.Date;
 import java.util.Map;
@@ -16,10 +16,11 @@ import java.util.Map;
  * @author Echo009
  * @since 2021/9/30
  */
+@Slf4j
 public class CommonLogic {
 
 
-    public static void updateTriggerTime(OmsLogger omsLogger, SpRemindTaskInfo spRemindTaskInfo) {
+    public static void updateTriggerTime(SpRemindTaskInfo spRemindTaskInfo) {
         try {
             // support EXDATE
             final String exDateStr = parseExDateStr(spRemindTaskInfo.getExtra());
@@ -29,7 +30,7 @@ public class CommonLogic {
             handleLifeCycle(spRemindTaskInfo, nextTriggerTime);
         } catch (Exception e) {
             // 记录异常信息
-            omsLogger.error("处理任务(id:{},colId:{},compId:{})失败，计算下次触发时间失败，已将其自动禁用，请检查重复规则表达式是否合法！recurrenceRule:{}", spRemindTaskInfo.getId(), spRemindTaskInfo.getColId(), spRemindTaskInfo.getCompId(), spRemindTaskInfo.getRecurrenceRule(), e);
+            log.error("处理任务(id:{},colId:{},compId:{})失败，计算下次触发时间失败，已将其自动禁用，请检查重复规则表达式是否合法！recurrenceRule:{}", spRemindTaskInfo.getId(), spRemindTaskInfo.getColId(), spRemindTaskInfo.getCompId(), spRemindTaskInfo.getRecurrenceRule(), e);
             disableTask(spRemindTaskInfo);
         }
     }
