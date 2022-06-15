@@ -164,6 +164,9 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
             task.setLocale(Locale.CHINA);
         }
         extra.put("locale", task.getLocale().toString());
+        if (!CollectionUtils.isEmpty(task.getExtra())){
+            extra.put(Property.EXDATE,(String) task.getExtra().get(Property.EXDATE));
+        }
         spRemindTaskInfo.setExtra(JacksonUtils.toString(extra));
         return spRemindTaskInfo;
     }
