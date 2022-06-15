@@ -107,7 +107,7 @@ public class InstanceStatusCheckService {
         long threshold = System.currentTimeMillis() - DISPATCH_TIMEOUT_MS;
         List<InstanceInfoDO> waitingDispatchInstances = instanceInfoRepository.findByAppIdInAndStatusAndExpectedTriggerTimeLessThan(partAppIds, InstanceStatus.WAITING_DISPATCH.getV(), threshold);
         if (!CollectionUtils.isEmpty(waitingDispatchInstances)) {
-            log.warn("[InstanceStatusChecker] find some instance which is not triggered as expected: {}", waitingDispatchInstances);
+            log.warn("[InstanceStatusChecker] find some instance which is not triggered as expected: {}", waitingDispatchInstances.stream().map(InstanceInfoDO::getInstanceId).collect(Collectors.toList()));
             waitingDispatchInstances.forEach(instance -> {
 
                 Optional<JobInfoDO> jobInfoOpt = jobInfoRepository.findById(instance.getJobId());
@@ -126,7 +126,7 @@ public class InstanceStatusCheckService {
         long threshold = System.currentTimeMillis() - RECEIVE_TIMEOUT_MS;
         List<InstanceInfoDO> waitingWorkerReceiveInstances = instanceInfoRepository.findByAppIdInAndStatusAndActualTriggerTimeLessThan(partAppIds, InstanceStatus.WAITING_WORKER_RECEIVE.getV(), threshold);
         if (!CollectionUtils.isEmpty(waitingWorkerReceiveInstances)) {
-            log.warn("[InstanceStatusChecker] find one instance didn't receive any reply from worker, try to redispatch: {}", waitingWorkerReceiveInstances);
+            log.warn("[InstanceStatusChecker] find one instance didn't receive any reply from worker, try to redispatch: {}", waitingWorkerReceiveInstances.stream().map(InstanceInfoDO::getInstanceId).collect(Collectors.toList()));
             waitingWorkerReceiveInstances.forEach(instance -> {
                 // 重新派发
                 JobInfoDO jobInfoDO = jobInfoRepository.findById(instance.getJobId()).orElseGet(JobInfoDO::new);
@@ -140,7 +140,7 @@ public class InstanceStatusCheckService {
         long threshold = System.currentTimeMillis() - RUNNING_TIMEOUT_MS;
         List<InstanceInfoDO> failedInstances = instanceInfoRepository.findByAppIdInAndStatusAndGmtModifiedBefore(partAppIds, InstanceStatus.RUNNING.getV(), new Date(threshold));
         if (!CollectionUtils.isEmpty(failedInstances)) {
-            log.warn("[InstanceStatusCheckService] instances({}) has not received status report for a long time.", failedInstances);
+            log.warn("[InstanceStatusCheckService] instances({}) has not received status report for a long time.", failedInstances.stream().map(InstanceInfoDO::getInstanceId).collect(Collectors.toList()));
             failedInstances.forEach(instance -> {
 
                 JobInfoDO jobInfoDO = jobInfoRepository.findById(instance.getJobId()).orElseGet(JobInfoDO::new);
