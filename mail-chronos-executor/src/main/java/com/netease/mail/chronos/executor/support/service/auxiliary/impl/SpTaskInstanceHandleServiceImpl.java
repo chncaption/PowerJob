@@ -25,8 +25,8 @@ public class SpTaskInstanceHandleServiceImpl extends AbstractTaskInstanceService
 
     @Override
     public long getThresholdDelta() {
-        // 30 s
-        return 30000;
+        // 10 s
+        return 10000;
     }
 
     @Override
