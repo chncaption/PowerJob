@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.model.Property;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,9 +25,9 @@ public class CommonLogic {
     public static void updateTriggerTime(SpRemindTaskInfo spRemindTaskInfo) {
         try {
             // support EXDATE
-            final String exDateStr = parseExDateStr(spRemindTaskInfo.getExtra());
+            final List<String> exDateList = parseExDateList(spRemindTaskInfo.getExtra());
             // 更新 nextTriggerTime , 不处理 miss fire 的情形 （从业务场景上来说，没有必要）
-            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), System.currentTimeMillis(), exDateStr);
+            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), System.currentTimeMillis(), exDateList);
             // 检查生命周期
             handleLifeCycle(spRemindTaskInfo, nextTriggerTime);
         } catch (Exception e) {
@@ -61,17 +63,23 @@ public class CommonLogic {
     }
 
 
-    public static String parseExDateStr(String extra) {
+    public static List<String> parseExDateList(String extra) {
         if (StringUtils.isBlank(extra)) {
-            return null;
+            return Collections.emptyList();
         }
         try {
             final Map<String, Object> map = JacksonUtils.deserialize(extra, new TypeReference<Map<String, Object>>() {
             });
-            return (String) map.get(Property.EXDATE);
-        } catch (Exception ignore) {
+            final Object v = map.get(Property.EXDATE);
+            if (v == null) {
+                return Collections.emptyList();
+            }
+            return JacksonUtils.deserialize(JacksonUtils.toString(v), new TypeReference<List<String>>() {
+            });
+        } catch (Exception e) {
+            log.warn("[cmd:parseExDateList,msg:failed,extra:{}]", extra, e);
             // ignore
-            return "";
+            return Collections.emptyList();
         }
     }
 

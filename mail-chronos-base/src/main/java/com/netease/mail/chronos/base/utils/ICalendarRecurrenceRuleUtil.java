@@ -1,14 +1,14 @@
 package com.netease.mail.chronos.base.utils;
 
+import cn.hutool.core.collection.CollUtil;
 import com.netease.mail.chronos.base.enums.BaseStatusEnum;
 import com.netease.mail.chronos.base.exception.BaseException;
 import lombok.SneakyThrows;
 import net.fortuna.ical4j.model.*;
 import net.fortuna.ical4j.model.property.ExDate;
-import org.apache.commons.lang.StringUtils;
 
 import java.text.ParseException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -31,19 +31,21 @@ public class ICalendarRecurrenceRuleUtil {
      * @param recurrenceRule 重复规则
      * @param seedTime       种子时间
      * @param startTime      开始时间
-     * @param exDateStr      排除的日期/时间列表
+     * @param exDateStrList      排除的日期/时间列表
      * @return 下次触发时间，会跳过 exDateStr 指定的日期/时间
      */
     @SneakyThrows
-    public static long calculateNextTriggerTime(String recurrenceRule, long seedTime, long startTime, String exDateStr) {
+    public static long calculateNextTriggerTime(String recurrenceRule, long seedTime, long startTime, List<String> exDateStrList) {
         long nextTriggerTime = calculateNextTriggerTime(recurrenceRule, seedTime, startTime);
-        if (nextTriggerTime == 0L || StringUtils.isBlank(exDateStr)) {
+        if (nextTriggerTime == 0L || CollUtil.isEmpty(exDateStrList)) {
             return nextTriggerTime;
         }
-        // 计算出列表
-        final ExDate exDate = new ExDate();
-        exDate.setValue(exDateStr);
-        final List<Date> dateList = new ArrayList<>(exDate.getDates());
+        List<Date> dateList = new LinkedList<>();
+        for (String str : exDateStrList) {
+            final ExDate exDate = new ExDate();
+            exDate.setValue(str);
+            dateList.addAll(exDate.getDates());
+        }
         // 参考 net.fortuna.ical4j.model.Component.calculateRecurrenceSet 中的处理逻辑
         while (dateList.contains(new DateTime(nextTriggerTime)) || dateList.contains(new Date(nextTriggerTime))) {
             nextTriggerTime = calculateNextTriggerTime(recurrenceRule, seedTime, nextTriggerTime);

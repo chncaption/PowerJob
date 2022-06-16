@@ -1,6 +1,7 @@
 package com.netease.mail.chronos.portal.service.impl;
 
 import cn.hutool.core.lang.Snowflake;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Maps;
 import com.netease.mail.chronos.base.enums.BaseStatusEnum;
 import com.netease.mail.chronos.base.exception.BaseException;
@@ -139,7 +140,7 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
     private SpRemindTaskInfo constructSpRemindTaskInfo(RemindTask task, Date now, Long triggerOffset) {
         val nextTriggerTime = calNextTriggerTime(task, triggerOffset);
         val spRemindTaskInfo = new SpRemindTaskInfo();
-        HashMap<String, String> extra = Maps.newHashMap();
+        HashMap<String, Object> extra = Maps.newHashMap();
         spRemindTaskInfo.setColId(task.getColId())
                 .setCompId(task.getCompId())
                 .setUid(task.getUid())
@@ -164,8 +165,9 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
             task.setLocale(Locale.CHINA);
         }
         extra.put("locale", task.getLocale().toString());
-        if (!CollectionUtils.isEmpty(task.getExtra())){
-            extra.put(Property.EXDATE,(String) task.getExtra().get(Property.EXDATE));
+        if (!CollectionUtils.isEmpty(task.getExtra())) {
+            // 这里是个列表
+            extra.put(Property.EXDATE, task.getExtra().get(Property.EXDATE));
         }
         spRemindTaskInfo.setExtra(JacksonUtils.toString(extra));
         return spRemindTaskInfo;
@@ -256,10 +258,14 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
                 if (StringUtils.isBlank(exdateStr)) {
                     return;
                 }
+                final List<String> exDateList = JacksonUtils.deserialize(exdateStr, new TypeReference<List<String>>() {
+                });
                 //
-                final ExDate exDate = new ExDate();
-                exDate.setValue(exdateStr);
-                exDate.validate();
+                for (String str : exDateList) {
+                    final ExDate exDate = new ExDate();
+                    exDate.setValue(str);
+                    exDate.validate();
+                }
             } catch (Exception e) {
                 log.warn("[opt:checkBaseProperties,msg:无效的 EXDATE!,task:{}]", JacksonUtils.toString(task));
                 throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "EXDATE 非法！");
@@ -297,12 +303,8 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
             }
             return next;
         }
-        long nextValidTimeAfter;
-        if (!CollectionUtils.isEmpty(task.getExtra()) && StringUtils.isNotBlank((String) task.getExtra().get(Property.EXDATE))) {
-            nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now, (String) task.getExtra().get(Property.EXDATE));
-        } else {
-            nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now);
-        }
+        // task.getExtra()
+        long nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now, parseExDateList(task));
         // 等于 0 表示不存在下一次触发时间
         if (nextValidTimeAfter == 0L) {
             // 不存在下一次调度时间
@@ -314,4 +316,23 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
         return nextValidTimeAfter;
     }
 
+
+    public List<String> parseExDateList(RemindTask task) {
+        if (CollectionUtils.isEmpty(task.getExtra())) {
+            return Collections.emptyList();
+        }
+        try {
+            final Object v = task.getExtra().get(Property.EXDATE);
+            if (v == null) {
+                return Collections.emptyList();
+            }
+            return JacksonUtils.deserialize(JacksonUtils.toString(v), new TypeReference<List<String>>() {
+            });
+        } catch (Exception e) {
+            log.warn("[cmd:parseExDateList,msg:failed,extra:{}]", task, e);
+            // ignore
+            return Collections.emptyList();
+        }
+
+    }
 }

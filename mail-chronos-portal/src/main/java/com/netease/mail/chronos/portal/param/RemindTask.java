@@ -59,7 +59,7 @@ public class RemindTask {
     private String param;
     /**
      * 其他信息，预留
-     * 1、EXDATE 排除的日期 或者 时间点  , https://datatracker.ietf.org/doc/html/rfc5545#section-3.8.5.1
+     * 1、EXDATE 排除的日期 或者 时间点  , https://datatracker.ietf.org/doc/html/rfc5545#section-3.8.5.1，这里是一个列表
      * --- net.fortuna.ical4j.model.property.ExDate ----
      */
     private Map<String, Object> extra;
