@@ -254,11 +254,11 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
         // 检查 extra 中的 EXDATE 信息是否合法
         if (!CollectionUtils.isEmpty(task.getExtra())) {
             try {
-                val exdateStr = (String) task.getExtra().get(Property.EXDATE);
-                if (StringUtils.isBlank(exdateStr)) {
+                val exdateList = task.getExtra().get(Property.EXDATE);
+                if (exdateList == null) {
                     return;
                 }
-                final List<String> exDateList = JacksonUtils.deserialize(exdateStr, new TypeReference<List<String>>() {
+                final List<String> exDateList = JacksonUtils.deserialize(JacksonUtils.toString(exdateList), new TypeReference<List<String>>() {
                 });
                 //
                 for (String str : exDateList) {
@@ -267,7 +267,7 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
                     exDate.validate();
                 }
             } catch (Exception e) {
-                log.warn("[opt:checkBaseProperties,msg:无效的 EXDATE!,task:{}]", JacksonUtils.toString(task));
+                log.warn("[opt:checkBaseProperties,msg:无效的 EXDATE!,task:{}]", JacksonUtils.toString(task),e);
                 throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "EXDATE 非法！");
             }
         }
