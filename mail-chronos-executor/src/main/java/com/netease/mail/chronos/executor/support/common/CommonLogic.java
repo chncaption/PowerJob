@@ -26,8 +26,14 @@ public class CommonLogic {
         try {
             // support EXDATE
             final List<String> exDateList = parseExDateList(spRemindTaskInfo.getExtra());
+
+            long time = System.currentTimeMillis();
+            // 参考时间取 nextTriggerTime 和 当前时间较大的值
+            if (spRemindTaskInfo.getNextTriggerTime() != null) {
+                time = Math.max(System.currentTimeMillis(), spRemindTaskInfo.getNextTriggerTime());
+            }
             // 更新 nextTriggerTime , 不处理 miss fire 的情形 （从业务场景上来说，没有必要）
-            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), System.currentTimeMillis(), exDateList);
+            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), time, exDateList);
             // 检查生命周期
             handleLifeCycle(spRemindTaskInfo, nextTriggerTime);
         } catch (Exception e) {
