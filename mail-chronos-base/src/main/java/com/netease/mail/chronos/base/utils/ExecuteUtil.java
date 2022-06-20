@@ -1,5 +1,6 @@
 package com.netease.mail.chronos.base.utils;
 
+import cn.hutool.core.lang.Holder;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -32,7 +33,7 @@ public class ExecuteUtil<T> {
     }
 
     @SuppressWarnings("all")
-    public static <T> void executeIgnoreSpecifiedExceptionWithoutReturn(Action action,Class<T> clazz){
+    public static <T> void executeIgnoreSpecifiedExceptionWithoutReturn(Action action, Class<T> clazz){
         try {
             action.exec();
         }catch (Throwable e){
@@ -41,6 +42,21 @@ public class ExecuteUtil<T> {
             }
         }
     }
+
+
+
+    @SuppressWarnings("all")
+    public static <T> void executeIgnoreSpecifiedExceptionWithoutReturn(Action action, Class<T> clazz, Holder<Boolean> hasException ){
+        try {
+            action.exec();
+        }catch (Throwable e){
+            if (!e.getClass().equals(clazz)) {
+                throw e;
+            }
+            hasException.set(true);
+        }
+    }
+
 
     @FunctionalInterface
     public interface Action{

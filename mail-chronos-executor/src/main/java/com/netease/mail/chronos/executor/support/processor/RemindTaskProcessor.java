@@ -1,6 +1,7 @@
 package com.netease.mail.chronos.executor.support.processor;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Holder;
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.util.IdUtil;
 import com.netease.mail.chronos.base.exception.BaseException;
@@ -118,17 +119,22 @@ public class RemindTaskProcessor implements MapProcessor {
                 if (shouldSkip(maxTriggerTime, spRemindTaskInfo)) {
                     continue;
                 }
-                // INTERVAL 之前的任务 现在才触发，打印日志，表示这个任务延迟太严重，正常情况下不应该出现
-                if (spRemindTaskInfo.getNextTriggerTime() < warnThreshold) {
-                    log.warn("当前任务处理延迟过高(> {} ms),task detail:({})", INTERVAL, spRemindTaskInfo);
-                }
                 // 生成实例入库
                 SpRtTaskInstance construct = construct(spRemindTaskInfo);
+                Holder<Boolean> exceptionHolder = new Holder<>(false);
                 // 这里会保证幂等性
-                ExecuteUtil.executeIgnoreSpecifiedExceptionWithoutReturn(() -> spTaskInstanceHandleService.insert(construct), DuplicateKeyException.class);
-                // 更新状态
-                spRemindTaskInfo.setTriggerTimes(spRemindTaskInfo.getTriggerTimes() + 1);
-                log.info("更新任务({})触发次数 {} => {}", spRemindTaskInfo.getId(), spRemindTaskInfo.getTriggerTimes() - 1, spRemindTaskInfo.getTriggerTimes());
+                ExecuteUtil.executeIgnoreSpecifiedExceptionWithoutReturn(() -> spTaskInstanceHandleService.insert(construct), DuplicateKeyException.class, exceptionHolder);
+                // 记录重复了则说明这条记录已经处理过，无需更新触发次数
+                if (Boolean.FALSE.equals(exceptionHolder.get())) {
+                    // 更新状态
+                    spRemindTaskInfo.setTriggerTimes(spRemindTaskInfo.getTriggerTimes() + 1);
+                    log.info("更新任务({})触发次数 {} => {},本次期望触发时间为 {}", spRemindTaskInfo.getId(), spRemindTaskInfo.getTriggerTimes() - 1, spRemindTaskInfo.getTriggerTimes(), spRemindTaskInfo.getNextTriggerTime());
+
+                    // INTERVAL 之前的任务 现在才触发，打印日志，表示这个任务延迟太严重，正常情况下不应该出现
+                    if (spRemindTaskInfo.getNextTriggerTime() < warnThreshold) {
+                        log.warn("当前任务处理延迟过高(> {} ms),task detail:({})", INTERVAL, spRemindTaskInfo);
+                    }
+                }
                 // 计算下次调度时间 , 理论上不应该会存在每分钟调度一次的提醒任务（业务场景决定）
                 String recurrenceRule = spRemindTaskInfo.getRecurrenceRule();
                 // 为空直接 disable (触发一次的任务)
