@@ -5,8 +5,6 @@ import akka.actor.ActorSystem;
 import akka.actor.DeadLetter;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
-import tech.powerjob.common.annotation.NetEaseCustomFeature;
-import tech.powerjob.common.enums.CustomFeatureEnum;
 import tech.powerjob.common.exception.PowerJobException;
 import tech.powerjob.common.RemoteConstant;
 import tech.powerjob.common.response.ResultDTO;
@@ -25,7 +23,6 @@ import tech.powerjob.worker.common.PowerJobWorkerConfig;
 import tech.powerjob.worker.common.PowerBannerPrinter;
 import tech.powerjob.worker.common.WorkerRuntime;
 import tech.powerjob.worker.common.utils.SpringUtils;
-import tech.powerjob.worker.netease.reporter.ProcessorInfoReporter;
 import tech.powerjob.worker.persistence.TaskPersistenceService;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
@@ -100,6 +97,11 @@ public class PowerJobWorker implements ApplicationContextAware, InitializingBean
             ThreadFactory timingPoolFactory = new ThreadFactoryBuilder().setNameFormat("oms-worker-timing-pool-%d").build();
             timingPool = Executors.newScheduledThreadPool(3, timingPoolFactory);
 
+            // 连接 server
+            ServerDiscoveryService serverDiscoveryService = new ServerDiscoveryService(workerRuntime.getAppId(), workerRuntime.getWorkerConfig());
+            serverDiscoveryService.start(timingPool);
+            workerRuntime.setServerDiscoveryService(serverDiscoveryService);
+
             // 初始化 ActorSystem（macOS上 new ServerSocket 检测端口占用的方法并不生效，可能是AKKA是Scala写的缘故？没办法...只能靠异常重试了）
             Map<String, Object> overrideConfig = Maps.newHashMap();
             overrideConfig.put("akka.remote.artery.canonical.hostname", NetUtils.getLocalHost());
@@ -111,15 +113,6 @@ public class PowerJobWorker implements ApplicationContextAware, InitializingBean
             int cores = Runtime.getRuntime().availableProcessors();
             ActorSystem actorSystem = ActorSystem.create(RemoteConstant.WORKER_ACTOR_SYSTEM_NAME, akkaFinalConfig);
             workerRuntime.setActorSystem(actorSystem);
-
-            // 初始化 ProcessorInfoReporter
-            @NetEaseCustomFeature(CustomFeatureEnum.PROCESSOR_AUTO_REGISTRY)
-            ProcessorInfoReporter processorInfoReporter = new ProcessorInfoReporter(workerRuntime,config.getProcessorScanPackages());
-            // 连接 server
-            ServerDiscoveryService serverDiscoveryService = new ServerDiscoveryService(workerRuntime.getAppId(), workerRuntime.getWorkerConfig(),processorInfoReporter);
-
-            serverDiscoveryService.start(timingPool);
-            workerRuntime.setServerDiscoveryService(serverDiscoveryService);
 
             ActorRef taskTrackerActorRef = actorSystem.actorOf(TaskTrackerActor.props(workerRuntime)
                     .withDispatcher("akka.task-tracker-dispatcher")

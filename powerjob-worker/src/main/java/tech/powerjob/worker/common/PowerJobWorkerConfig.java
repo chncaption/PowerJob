@@ -66,6 +66,4 @@ public class PowerJobWorkerConfig {
 
     private String tag;
 
-    private String processorScanPackages;
-
 }

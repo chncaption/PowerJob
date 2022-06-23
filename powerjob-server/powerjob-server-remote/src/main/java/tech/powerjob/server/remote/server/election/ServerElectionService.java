@@ -84,7 +84,7 @@ public class ServerElectionService {
             boolean lockStatus = lockService.tryLock(lockName, 30000);
             if (!lockStatus) {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 }catch (Exception ignore) {
                 }
                 continue;

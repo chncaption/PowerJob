@@ -139,10 +139,6 @@ public class PowerJobProperties {
          * {@link WorkflowContext} max length for #appendedContextData
          */
         private int maxAppendedWfContextLength = 8192;
-        /**
-         * Processor scan packages
-         */
-        private String processorScanPackages = "com.netease.mail";
 
     }
 }
