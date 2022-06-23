@@ -91,8 +91,13 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
         List<SpRemindTaskInfo> deleteList;
         if (StringUtils.isNotBlank(compId)) {
             // 根据 compId 删除
-            deleteList = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(UID_COL_NAME, uid, S_COL_NAME, compId));
+            deleteList = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(S_COL_NAME, compId));
         } else {
+            // 否则根据  uid + colId 删除
+            // 检查 uid 是否为空
+            if (StringUtils.isBlank(uid)){
+                throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "使用 colId 删除时，必须指定 uid！");
+            }
             deleteList = spRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(UID_COL_NAME, uid, P_COL_NAME, colId));
         }
 

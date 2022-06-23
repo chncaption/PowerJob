@@ -41,7 +41,7 @@ public interface TaskManagerFeignApi {
      * @return 被删除的任务信息
      */
     @DeleteMapping("/manage/remind_task")
-    BaseResponse<List<RemindTaskVo>> delete(@RequestParam(value = "uid") String uid, @RequestParam(value = "colId", required = false) String colId, @RequestParam(value = "compId", required = false) String compId);
+    BaseResponse<List<RemindTaskVo>> delete(@RequestParam(value = "uid", required = false) String uid, @RequestParam(value = "colId", required = false) String colId, @RequestParam(value = "compId", required = false) String compId);
 
     /**
      * 更新任务 （会先删除再创建）
