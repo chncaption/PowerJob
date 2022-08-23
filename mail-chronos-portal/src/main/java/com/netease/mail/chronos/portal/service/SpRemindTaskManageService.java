@@ -37,6 +37,12 @@ public interface SpRemindTaskManageService {
      */
     List<RemindTaskVo> update(RemindTask task);
 
+    /**
+     * 批量更新
+     * @param task 提醒任务列表
+     * @return 更新后的任务信息
+     */
+    List<RemindTaskVo> batchUpdate(List<RemindTask> task);
 
     /**
      * 查询任务信息

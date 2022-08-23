@@ -25,6 +25,7 @@ import net.fortuna.ical4j.model.parameter.Value;
 import net.fortuna.ical4j.model.property.ExDate;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,6 +144,38 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
             log.info("[opt:update,message:create task ,colId:{},compId:{},id:{},detail:{}]", task.getColId(), task.getCompId(), spRemindTaskInfo.getId(), task);
         }
         return res;
+    }
+
+    @Override
+    @Transactional(value = "chronosSupportTransactionManager", rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
+    public List<RemindTaskVo> batchUpdate(List<RemindTask> taskList) {
+        log.info("[opt:batchUpdate,message:start,list:{}]", taskList);
+
+        for (RemindTask remindTask : taskList) {
+            checkBaseProperties(remindTask);
+        }
+
+        for (RemindTask task : taskList) {
+            // 先 select 再删除
+            List<Long> ids = spRemindTaskInfoMapper.selectIdListByCompId(task.getCompId());
+            if (!CollectionUtils.isEmpty(ids)) {
+                int deleted = spRemindTaskInfoMapper.deleteBatchIds(ids);
+                log.info("[opt:batchUpdate,message:delete origin task info success,colId:{},compId:{},count:{}]", task.getColId(), task.getCompId(), deleted);
+            }
+        }
+        List<RemindTaskVo> resList = new ArrayList<>();
+        val now = new Date();
+        // 创建
+        for (RemindTask task : taskList) {
+            List<Long> triggerOffsets = task.getTriggerOffsets();
+            for (Long triggerOffset : triggerOffsets) {
+                SpRemindTaskInfo spRemindTaskInfo = constructSpRemindTaskInfo(task, now, triggerOffset);
+                spRemindTaskInfoMapper.insert(spRemindTaskInfo);
+                resList.add(SimpleBeanConvertUtil.convert(spRemindTaskInfo, RemindTaskVo.class));
+                log.info("[opt:batchUpdate,message:create task ,colId:{},compId:{},id:{},detail:{}]", task.getColId(), task.getCompId(), spRemindTaskInfo.getId(), task);
+            }
+        }
+        return resList;
     }
 
     private SpRemindTaskInfo constructSpRemindTaskInfo(RemindTask task, Date now, Long triggerOffset) {

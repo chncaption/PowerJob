@@ -53,6 +53,15 @@ public interface TaskManagerFeignApi {
     BaseResponse<List<RemindTaskVo>> update(@RequestBody RemindTask task);
 
     /**
+     * 更新任务 （会先删除再创建）
+     *
+     * @param taskList 任务详情
+     * @return 更新后的任务信息
+     */
+    @PatchMapping("/manage/remind_task/batch")
+    BaseResponse<List<RemindTaskVo>> update(@RequestBody List<RemindTask> taskList);
+
+    /**
      * 查询任务信息
      *
      * @param uid    uid

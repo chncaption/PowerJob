@@ -53,6 +53,12 @@ public class RemindTaskManageController {
         return BaseResponse.success(spRemindTaskManageService.update(task));
     }
 
+
+    @PatchMapping("/batch")
+    BaseResponse<List<RemindTaskVo>>  batchUpdate(@RequestBody List<RemindTask> taskList){
+        return BaseResponse.success(spRemindTaskManageService.batchUpdate(taskList));
+    }
+
     /**
      * 查询任务信息
      */
