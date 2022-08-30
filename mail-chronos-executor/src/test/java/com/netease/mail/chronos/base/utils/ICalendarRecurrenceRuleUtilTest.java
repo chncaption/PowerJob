@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.LinkedList;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Echo009
@@ -30,8 +28,8 @@ class ICalendarRecurrenceRuleUtilTest {
         System.out.println(simpleDateFormat.format(nextTriggerTime));
 
 
-        nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime("FREQ=MINUTELY;INTERVAL=60;COUNT=24;UNTIL=20210930T010000Z", date2.getTime(), date1.getTime(),
-                Arrays.asList("20210930T020000,20210930T030000", "20210930T050000,20210930T060000"));
+        nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateStrList("FREQ=MINUTELY;INTERVAL=60;COUNT=24;UNTIL=20210930T010000Z", date2.getTime(), date1.getTime(),
+                Arrays.asList("20210930", "20210930T050000,20210930T060000"));
         System.out.println(nextTriggerTime);
         System.out.println(simpleDateFormat.format(nextTriggerTime));
         System.out.println(System.currentTimeMillis());

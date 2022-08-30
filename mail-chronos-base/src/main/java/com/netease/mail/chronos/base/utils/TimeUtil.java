@@ -24,9 +24,53 @@ public class TimeUtil {
     private static final ThreadLocal<SimpleDateFormat> NUMBER_DATE_FORMAT =
             ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyyMMdd"));
 
+    private static final ThreadLocal<SimpleDateFormat> UTC_DATETIME_FORMAT =
+            ThreadLocal.withInitial(() -> {
+                final SimpleDateFormat utcFmt = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+                utcFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+                return utcFmt;
+            });
+
+    private static final ThreadLocal<SimpleDateFormat> UTC_DATE_FORMAT =
+            ThreadLocal.withInitial(() -> {
+                final SimpleDateFormat utcFmt = new SimpleDateFormat("yyyyMMdd");
+                utcFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+                return utcFmt;
+            });
+
+    private static final ThreadLocal<SimpleDateFormat> T_DATE_FORMAT =
+            ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyyMMdd'T'HHmmss"));
+
+    private static final ThreadLocal<SimpleDateFormat> DATE_FORMAT =
+            ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyyMMdd"));
+
     private TimeUtil() {
 
     }
+
+    public static String toUtcDateTimeString(String tDateTimeStr , String zoneId){
+        try {
+            final SimpleDateFormat tDf = T_DATE_FORMAT.get();
+            tDf.setTimeZone(TimeUtil.getTimeZoneByZoneId(zoneId));
+            final Date parse = tDf.parse(tDateTimeStr);
+            return UTC_DATETIME_FORMAT.get().format(parse);
+        }catch (Exception e){
+            throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "无法转换成 UTC 时间，格式有误, tDateTimeStr="+ tDateTimeStr + ",zoneId=" + zoneId);
+        }
+    }
+
+    public static String toUtcDateString(String dateStr , String zoneId){
+        try {
+            final SimpleDateFormat tDf = DATE_FORMAT.get();
+            tDf.setTimeZone(TimeUtil.getTimeZoneByZoneId(zoneId));
+            final Date parse = tDf.parse(dateStr);
+            return UTC_DATE_FORMAT.get().format(parse);
+        }catch (Exception e){
+            throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "无法转换成 UTC 日期，格式有误, dateStr="+ dateStr + ",zoneId=" + zoneId);
+        }
+    }
+
+
 
     public static TimeZone getTimeZoneByZoneId(String zoneId) {
         val check = checkTimeZoneId(zoneId);

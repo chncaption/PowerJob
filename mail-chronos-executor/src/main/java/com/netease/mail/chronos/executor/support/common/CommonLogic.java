@@ -25,7 +25,7 @@ public class CommonLogic {
     public static void updateTriggerTime(SpRemindTaskInfo spRemindTaskInfo) {
         try {
             // support EXDATE
-            final List<String> exDateList = parseExDateList(spRemindTaskInfo.getExtra());
+            final List<String> exDateList = parseExDateList(spRemindTaskInfo);
 
             long time = System.currentTimeMillis();
             // 参考时间取 nextTriggerTime 和 当前时间较大的值
@@ -33,7 +33,7 @@ public class CommonLogic {
                 time = Math.max(System.currentTimeMillis(), spRemindTaskInfo.getNextTriggerTime());
             }
             // 更新 nextTriggerTime , 不处理 miss fire 的情形 （从业务场景上来说，没有必要）
-            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), time, exDateList);
+            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateList(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), time, exDateList, spRemindTaskInfo.getTimeZoneId());
             // 检查生命周期
             handleLifeCycle(spRemindTaskInfo, nextTriggerTime);
         } catch (Exception e) {
@@ -69,12 +69,12 @@ public class CommonLogic {
     }
 
 
-    public static List<String> parseExDateList(String extra) {
-        if (StringUtils.isBlank(extra)) {
+    public static List<String> parseExDateList(SpRemindTaskInfo spRemindTaskInfo) {
+        if (StringUtils.isBlank(spRemindTaskInfo.getExtra())) {
             return Collections.emptyList();
         }
         try {
-            final Map<String, Object> map = JacksonUtils.deserialize(extra, new TypeReference<Map<String, Object>>() {
+            final Map<String, Object> map = JacksonUtils.deserialize(spRemindTaskInfo.getExtra(), new TypeReference<Map<String, Object>>() {
             });
             final Object v = map.get(Property.EXDATE);
             if (v == null) {
@@ -83,7 +83,7 @@ public class CommonLogic {
             return JacksonUtils.deserialize(JacksonUtils.toString(v), new TypeReference<List<String>>() {
             });
         } catch (Exception e) {
-            log.warn("[cmd:parseExDateList,msg:failed,extra:{}]", extra, e);
+            log.warn("[cmd:parseExDateList,msg:failed,extra:{}]", spRemindTaskInfo.getExtra(), e);
             // ignore
             return Collections.emptyList();
         }

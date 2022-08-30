@@ -18,8 +18,10 @@ import com.netease.mail.chronos.portal.vo.RemindTaskVo;
 import com.netease.mail.quark.commons.serialization.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import net.fortuna.ical4j.model.DateList;
 import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.Recur;
+import net.fortuna.ical4j.model.parameter.Value;
 import net.fortuna.ical4j.model.property.ExDate;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -267,8 +270,9 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
                 });
                 //
                 for (String str : exDateList) {
-                    final ExDate exDate = new ExDate();
-                    exDate.setValue(str);
+                    DateList dates ;
+                    dates = toDateList(task, str);
+                    final ExDate exDate = new ExDate(dates);
                     exDate.validate();
                 }
             } catch (Exception e) {
@@ -276,6 +280,24 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
                 throw new BaseException(BaseStatusEnum.ILLEGAL_ARGUMENT.getCode(), "EXDATE 非法！");
             }
         }
+    }
+
+    @SuppressWarnings("all")
+    private static DateList toDateList(RemindTask task, String str) throws ParseException {
+        DateList dates;
+        if (StringUtils.contains(str, 'T') && StringUtils.contains(str, 'Z')) {
+            // 如果是 UTC 时间则不带时区
+            dates = new DateList(str, Value.DATE_TIME);
+        } else if (StringUtils.contains(str, 'T') && !StringUtils.contains(str, 'Z')) {
+            // 如果非 UTC 时间（带 T 不带 Z），则转成 UTC 时间
+            final String s = TimeUtil.toUtcDateTimeString(str, task.getTimeZoneId());
+            dates = new DateList(s, Value.DATE_TIME);
+        } else {
+            // 如果是日期类型 （即不带 T ），没必要带时区
+            final String s = TimeUtil.toUtcDateString(str, task.getTimeZoneId());
+            dates = new DateList(str, Value.DATE);
+        }
+        return dates;
     }
 
 
@@ -309,7 +331,7 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
             return next;
         }
         // task.getExtra()
-        long nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now, parseExDateList(task));
+        long nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateList(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now, parseExDateList(task),task.getTimeZoneId());
         // 等于 0 表示不存在下一次触发时间
         if (nextValidTimeAfter == 0L) {
             // 不存在下一次调度时间
