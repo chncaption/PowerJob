@@ -56,7 +56,7 @@
         <dependency>
             <groupId>com.netease.mail</groupId>
             <artifactId>mail-chronos-base</artifactId>
-            <version>${chronos.version}</version>
+            <version>1.1.1-SNAPSHOT</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus -->
         <dependency>

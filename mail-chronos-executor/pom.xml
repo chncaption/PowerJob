@@ -69,7 +69,7 @@
         <dependency>
             <groupId>com.netease.mail</groupId>
             <artifactId>mail-chronos-base</artifactId>
-            <version>${chronos.version}</version>
+            <version>1.1.1-SNAPSHOT</version>
         </dependency>
         <!-- prometheus 监控 -->
         <dependency>
