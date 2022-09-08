@@ -1,19 +1,19 @@
 package tech.powerjob.worker.background;
 
-import tech.powerjob.common.annotation.NetEaseCustomFeature;
-import tech.powerjob.common.enums.CustomFeatureEnum;
-import tech.powerjob.common.exception.PowerJobException;
-import tech.powerjob.common.response.ResultDTO;
-import tech.powerjob.common.utils.CommonUtils;
-import tech.powerjob.common.serialize.JsonUtils;
-import tech.powerjob.common.utils.HttpUtils;
-import tech.powerjob.worker.common.PowerJobWorkerConfig;
-import tech.powerjob.worker.core.tracker.task.TaskTracker;
-import tech.powerjob.worker.core.tracker.task.TaskTrackerPool;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
+import tech.powerjob.common.annotation.NetEaseCustomFeature;
+import tech.powerjob.common.enums.CustomFeatureEnum;
+import tech.powerjob.common.exception.PowerJobException;
+import tech.powerjob.common.response.ResultDTO;
+import tech.powerjob.common.serialize.JsonUtils;
+import tech.powerjob.common.utils.CommonUtils;
+import tech.powerjob.common.utils.HttpUtils;
+import tech.powerjob.worker.common.PowerJobWorkerConfig;
+import tech.powerjob.worker.core.tracker.task.TaskTracker;
+import tech.powerjob.worker.core.tracker.task.TaskTrackerPool;
 import tech.powerjob.worker.netease.reporter.ProcessorInfoReporter;
 
 import java.util.List;
@@ -58,7 +58,15 @@ public class ServerDiscoveryService {
         if (org.springframework.util.StringUtils.isEmpty(this.currentServerAddress) && !config.isEnableTestMode()) {
             throw new PowerJobException("can't find any available server, this worker has been quarantined.");
         }
-        timingPool.scheduleAtFixedRate(() -> this.currentServerAddress = discovery(), 10, 10, TimeUnit.SECONDS);
+        // 这里必须保证成功
+        timingPool.scheduleAtFixedRate(() -> {
+                    try {
+                        this.currentServerAddress = discovery();
+                    } catch (Exception e) {
+                        log.error("[PowerDiscovery] fail to discovery server!", e);
+                    }
+                }
+                , 10, 10, TimeUnit.SECONDS);
     }
 
     public String getCurrentServerAddress() {
