@@ -25,3 +25,22 @@ eureka:
 
 logging:
   config: classpath:logback/logback-test.xml
+
+chronos:
+  server: chronos-server-qzbeta.test.mail.163.com
+  appName: mail-common
+  password: mail-common
+  eventWorkflowId: 5
+
+### 大师号客户端相关配置
+master:
+  core:
+    appId: chronos-portal
+    host: http://master-account-core.ns1.qzgw-beta.163.internal
+    salt: ZDhhY2Q1MDI1NmUy
+
+auth:
+  config:
+    allowDisableTimestampCheck: true
+    allowDisableSignCheck: true
+    allowDisableMasterFpCheck: true

@@ -27,3 +27,11 @@ eureka:
 
 logging:
   config: classpath:logback/logback-release.xml
+
+
+### 大师号客户端相关配置
+master:
+  core:
+    appId: chronos-portal
+    host: http://master-account-core.mail-upper-apps.qzgw.163.internal
+    salt: NWJkNDEzMWExOTM2

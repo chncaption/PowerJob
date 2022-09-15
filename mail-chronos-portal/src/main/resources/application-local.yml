@@ -1,12 +1,12 @@
 datasource:
   chronos:
     base:
-      jdbcUrl: jdbc:mysql://localhost:3306/alpine?useSSL=false&allowPublicKeyRetrieval=true
+      jdbcUrl: jdbc:mysql://10.224.192.138:3306/chronos?useSSL=false&allowPublicKeyRetrieval=true
       username: Echo009
       password: ironman
       pool-name: chronos-base-datasource
     support:
-      jdbcUrl: jdbc:mysql://localhost:3306/alpine?useSSL=false&allowPublicKeyRetrieval=true
+      jdbcUrl: jdbc:mysql://10.224.192.138:3306/chronos_support?useSSL=false&allowPublicKeyRetrieval=true
       username: Echo009
       password: ironman
       pool-name: chronos-support-datasource
@@ -16,3 +16,24 @@ datasource:
 
 logging:
   config: classpath:logback/logback-local.xml
+
+
+chronos:
+  server: chronos-server.local:7700
+  appName: mail-common
+  password: mail-common
+  eventWorkflowId: 5
+
+
+### 大师号客户端相关配置
+master:
+  core:
+    appId: chronos-portal
+    host: http://master-account-core.ns1.qzgw-beta.163.internal
+    salt: ZDhhY2Q1MDI1NmUy
+
+auth:
+  config:
+    allowDisableTimestampCheck: true
+    allowDisableSignCheck: true
+    allowDisableMasterFpCheck: true

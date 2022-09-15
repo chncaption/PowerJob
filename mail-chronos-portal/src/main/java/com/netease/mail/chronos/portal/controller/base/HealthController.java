@@ -1,4 +1,4 @@
-package com.netease.mail.chronos.portal.controller;
+package com.netease.mail.chronos.portal.controller.base;
 
 import com.netease.mail.chronos.base.response.BaseResponse;
 import org.springframework.web.bind.annotation.RequestMapping;

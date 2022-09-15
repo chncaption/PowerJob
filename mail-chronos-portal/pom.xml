@@ -16,7 +16,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <chronos.version>1.0.0-SNAPSHOT</chronos.version>
+        <chronos.version>1.1.0-SNAPSHOT</chronos.version>
         <spring-cloud.version>Hoxton.SR12</spring-cloud.version>
     </properties>
 
@@ -57,6 +57,16 @@
             <groupId>com.netease.mail</groupId>
             <artifactId>mail-chronos-base</artifactId>
             <version>1.1.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.netease.mail</groupId>
+            <artifactId>mail-chronos-client</artifactId>
+            <version>${chronos.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.netease.mail.master</groupId>
+            <artifactId>masterdevice</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus -->
         <dependency>

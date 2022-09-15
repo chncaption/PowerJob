@@ -15,10 +15,13 @@ public class ComponentConfig {
 
     @Bean("remindTaskIdGenerator")
     public Snowflake getRemindTaskIdGenerator(){
-        return IdUtil.getSnowflake();
+        return new Snowflake();
     }
 
 
-
+    @Bean("exRemindTaskIdGenerator")
+    public Snowflake getExRemindTaskIdGenerator(){
+        return new Snowflake();
+    }
 
 }

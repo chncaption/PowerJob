@@ -1,4 +1,4 @@
-package com.netease.mail.chronos.portal.controller;
+package com.netease.mail.chronos.portal.controller.internal;
 
 import com.netease.mail.chronos.base.enums.BaseStatusEnum;
 import com.netease.mail.chronos.base.exception.BaseException;
