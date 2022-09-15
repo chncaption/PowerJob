@@ -8,10 +8,13 @@ import com.netease.mail.chronos.executor.support.base.po.TaskInstancePrimaryKey;
 import com.netease.mail.chronos.executor.support.entity.base.TaskInstance;
 import com.netease.mail.chronos.executor.support.enums.TaskInstanceHandleStrategy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Echo009
@@ -61,6 +64,17 @@ public abstract class AbstractTaskInstanceService<T extends TaskInstance> {
     public T selectByPrimaryKey(TaskInstancePrimaryKey primaryKey) {
         return getMapper().selectByPrimaryKey(primaryKey.getId(), primaryKey.getPartitionKey());
     }
+
+    public List<T> selectByPrimaryKeyList(List<TaskInstancePrimaryKey> primaryKeyList) {
+
+        if (CollectionUtils.isEmpty(primaryKeyList)){
+            return Collections.emptyList();
+        }
+        List<Integer> partitionKeyList = primaryKeyList.stream().map(TaskInstancePrimaryKey::getPartitionKey).distinct().collect(Collectors.toList());
+        List<Long> idList = primaryKeyList.stream().map(TaskInstancePrimaryKey::getId).collect(Collectors.toList());
+        return getMapper().selectByIdListAndPartitionKeyList(idList, partitionKeyList);
+    }
+
 
 
     public void updatePartition() {

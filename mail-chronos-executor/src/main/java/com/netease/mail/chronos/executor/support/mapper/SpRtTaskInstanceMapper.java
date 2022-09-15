@@ -24,6 +24,9 @@ public interface SpRtTaskInstanceMapper extends TaskInstanceBaseMapper<SpRtTaskI
     SpRtTaskInstance selectByPrimaryKey(@Param("id") Long id, @Param("partitionKey") Integer partitionKey);
 
     @Override
+    List<SpRtTaskInstance> selectByIdListAndPartitionKeyList(List<Long> idList, List<Integer> partitionKeyList);
+
+    @Override
     int updateByPrimaryKey(@Param("taskInstance") SpRtTaskInstance taskInstance);
 
     /**

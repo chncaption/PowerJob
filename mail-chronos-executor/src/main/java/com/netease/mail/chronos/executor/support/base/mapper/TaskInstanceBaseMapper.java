@@ -12,7 +12,6 @@ import java.util.List;
  */
 public interface TaskInstanceBaseMapper<T extends TaskInstance> extends Mapper<T> {
 
-
     /**
      * 获取需要触发的实例列表
      *
@@ -37,6 +36,15 @@ public interface TaskInstanceBaseMapper<T extends TaskInstance> extends Mapper<T
      * @return TaskInstance
      */
     T selectByPrimaryKey(Long id, Integer partitionKey);
+
+    /**
+     * 获取任务实例列表
+     *
+     * @param idList id列表
+     * @param partitionKeyList 分区键列表
+     * @return 需要触发的任务实例
+     */
+    List<T> selectByIdListAndPartitionKeyList(List<Long> idList, List<Integer> partitionKeyList);
 
     /**
      * 根据主键更新记录

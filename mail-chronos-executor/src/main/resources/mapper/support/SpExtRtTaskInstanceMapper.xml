@@ -2,10 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.netease.mail.chronos.executor.support.mapper.SpRtTaskInstanceMapper">
+<mapper namespace="com.netease.mail.chronos.executor.support.mapper.SpExtRtTaskInstanceMapper">
 
     <update id="updateByPrimaryKey">
-        update sp_rt_task_instance
+        update sp_ext_rt_instance
         set actual_trigger_time = #{taskInstance.actualTriggerTime},
             finished_time       = #{taskInstance.finishedTime},
             running_times= #{taskInstance.runningTimes},
@@ -18,18 +18,18 @@
     </update>
 
     <update id="dropPartition">
-        alter table sp_rt_task_instance
+        alter table sp_ext_rt_instance
             drop partition ${partitionName};
     </update>
 
     <update id="createPartition">
-        alter table sp_rt_task_instance
+        alter table sp_ext_rt_instance
             add partition (partition ${partitionName} VALUES LESS THAN ( ${valueLimit} ));
     </update>
 
     <select id="selectIdListOfNeedTriggerInstance"
             resultType="com.netease.mail.chronos.executor.support.base.po.TaskInstancePrimaryKey">
-        select id,partition_key from sp_rt_task_instance where expected_trigger_time
+        select id,partition_key from sp_ext_rt_instance where expected_trigger_time
         <![CDATA[ < ]]> #{threshold}
         and partition_key in
         <foreach collection="partitionKeyList" index="index" item="item" open="(" separator="," close=")">
@@ -40,7 +40,7 @@
     </select>
 
     <select id="selectByPrimaryKey"
-            resultType="com.netease.mail.chronos.executor.support.entity.SpRtTaskInstance">
+            resultType="com.netease.mail.chronos.executor.support.entity.SpExtRtTaskInstance">
         select id,
                task_id,
                custom_id,
@@ -58,12 +58,12 @@
                partition_key,
                update_time,
                create_time
-        from sp_rt_task_instance
+        from sp_ext_rt_instance
         where id = #{id}
           and partition_key = #{partitionKey}
     </select>
     <select id="selectByIdListAndPartitionKeyList"
-            resultType="com.netease.mail.chronos.executor.support.entity.SpRtTaskInstance">
+            resultType="com.netease.mail.chronos.executor.support.entity.SpExtRtTaskInstance">
         select id,
         task_id,
         custom_id,
@@ -81,7 +81,7 @@
         partition_key,
         update_time,
         create_time
-        from sp_rt_task_instance
+        from sp_ext_rt_instance
         where id in
         <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
             #{item}
@@ -92,11 +92,12 @@
         </foreach>
     </select>
 
+
     <insert id="insert">
 
-        insert into sp_rt_task_instance (id, task_id, custom_id, custom_key, param, extra, expected_trigger_time,
-                                         actual_trigger_time, finished_time, result, partition_key, update_time,
-                                         create_time) value
+        insert into sp_ext_rt_instance (id, task_id, custom_id, custom_key, param, extra, expected_trigger_time,
+                                        actual_trigger_time, finished_time, result, partition_key, update_time,
+                                        create_time) value
             (
              #{taskInstance.id},
              #{taskInstance.taskId},

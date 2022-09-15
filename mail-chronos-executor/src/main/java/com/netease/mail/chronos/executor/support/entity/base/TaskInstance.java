@@ -3,6 +3,7 @@ package com.netease.mail.chronos.executor.support.entity.base;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.Date;
  * @author Echo009
  */
 @Data
+@EqualsAndHashCode(of = {"id","partitionKey"})
 public class TaskInstance implements Serializable {
     /**
      * 注意这个类不用能 baseMapper 提供的一系列方法

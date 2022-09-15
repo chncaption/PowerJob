@@ -2,7 +2,9 @@ package com.netease.mail.chronos.mapper;
 
 import com.netease.mail.chronos.base.context.DaoBaseContext;
 import com.netease.mail.chronos.executor.support.base.po.TaskInstancePrimaryKey;
+import com.netease.mail.chronos.executor.support.entity.SpExtRtTaskInstance;
 import com.netease.mail.chronos.executor.support.entity.SpRtTaskInstance;
+import com.netease.mail.chronos.executor.support.mapper.SpExtRtTaskInstanceMapper;
 import com.netease.mail.chronos.executor.support.mapper.SpRtTaskInstanceMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -14,9 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Echo009
@@ -30,6 +30,9 @@ public class MapperTest {
 
     @Autowired
     private SpRtTaskInstanceMapper spRtTaskInstanceMapper;
+
+    @Autowired
+    private SpExtRtTaskInstanceMapper spExtRtTaskInstanceMapper;
 
     @Test
     @Transactional
@@ -76,10 +79,67 @@ public class MapperTest {
 
         SpRtTaskInstance afterUpdate  = spRtTaskInstanceMapper.selectByPrimaryKey(origin.getId(), origin.getPartitionKey());
         log.info("afterUpdate:{}",afterUpdate);
+
         Assert.assertEquals(afterUpdate.getExpectedTriggerTime(),inserted.getExpectedTriggerTime());
 
 
+        final List<SpRtTaskInstance> spRtTaskInstances = spRtTaskInstanceMapper.selectByIdListAndPartitionKeyList(Collections.singletonList(origin.getId()), Collections.singletonList(origin.getPartitionKey()));
+
+        Assert.assertEquals(spRtTaskInstances.get(0),afterUpdate);
     }
 
 
+    @Test
+    @Transactional
+    public void testSpExtRtTaskInstanceMapper() {
+
+        SpExtRtTaskInstance origin = new SpExtRtTaskInstance();
+        origin.setId(1L);
+        origin.setPartitionKey(20211027);
+        origin.setCustomId("1L");
+        origin.setCustomKey("1L");
+        origin.setTaskId(1L);
+        origin.setStatus(0);
+        origin.setEnable(true);
+        origin.setExpectedTriggerTime(0L);
+        origin.setMaxRetryTimes(1);
+        origin.setCreateTime(new Date());
+        origin.setUpdateTime(new Date());
+
+        int insert = spExtRtTaskInstanceMapper.insert(origin);
+
+        SpExtRtTaskInstance inserted = spExtRtTaskInstanceMapper.selectByPrimaryKey(origin.getId(), origin.getPartitionKey());
+
+        log.info("inserted:{}",inserted);
+        Assert.assertNotNull("insert failed!",inserted);
+
+        // just test sql
+        List<Integer> partitionList = new ArrayList<>();
+        partitionList.add(20211028);
+        partitionList.add(20211027);
+        List<TaskInstancePrimaryKey> taskInstancePrimaryKeys = spExtRtTaskInstanceMapper.selectIdListOfNeedTriggerInstance(1L, partitionList,10);
+
+        for (TaskInstancePrimaryKey taskInstancePrimaryKey : taskInstancePrimaryKeys) {
+            log.info("needTriggerInstanceKey:{}",taskInstancePrimaryKey);
+        }
+        // update
+
+        origin.setStatus(3);
+        origin.setEnable(false);
+        origin.setRunningTimes(1);
+        origin.setUpdateTime(new Date());
+        origin.setExpectedTriggerTime(-1L);
+
+        spExtRtTaskInstanceMapper.updateByPrimaryKey(origin);
+
+        SpExtRtTaskInstance afterUpdate  = spExtRtTaskInstanceMapper.selectByPrimaryKey(origin.getId(), origin.getPartitionKey());
+        log.info("afterUpdate:{}",afterUpdate);
+        Assert.assertEquals(afterUpdate.getExpectedTriggerTime(),inserted.getExpectedTriggerTime());
+
+        final List<SpExtRtTaskInstance> spRtTaskInstances = spExtRtTaskInstanceMapper.selectByIdListAndPartitionKeyList(Collections.singletonList(origin.getId()), Collections.singletonList(origin.getPartitionKey()));
+
+        Assert.assertEquals(spRtTaskInstances.get(0),inserted);
+
+
+    }
 }

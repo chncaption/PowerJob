@@ -154,8 +154,10 @@ public class ExternalSpRemindTaskManageServiceImpl implements ExternalSpRemindTa
         spExtRemindTaskInfo.setNextTriggerTime(input.getExpectTriggerTime());
         spExtRemindTaskInfo.setTriggerTimes(0);
         spExtRemindTaskInfo.setEnable(input.getExpectTriggerTime() > System.currentTimeMillis());
-
         final Date now = new Date();
+        if (!spExtRemindTaskInfo.getEnable()) {
+            spExtRemindTaskInfo.setDisableTime(now);
+        }
         spExtRemindTaskInfo.setCreateTime(now);
         spExtRemindTaskInfo.setUpdateTime(now);
 

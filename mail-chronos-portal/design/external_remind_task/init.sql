@@ -11,6 +11,7 @@ create table sx_sp_ext_remind_task_info
     next_trigger_time bigint       not null comment '触发时间',
     trigger_times     int          not null default 0 comment '触发次数',
     enable            tinyint      not null default 1 comment '是否启用',
+    disable_time      datetime              default null comment '被禁用的时间',
     update_time       datetime     not null comment '更新时间',
     create_time       datetime     not null comment '创建时间',
     key idx1_ext_remind_task_info (next_trigger_time, enable),

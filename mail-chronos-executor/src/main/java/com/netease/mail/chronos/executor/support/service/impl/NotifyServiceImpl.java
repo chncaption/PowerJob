@@ -2,7 +2,7 @@ package com.netease.mail.chronos.executor.support.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-import com.netease.mail.chronos.executor.support.entity.SpRtTaskInstance;
+import com.netease.mail.chronos.executor.support.entity.base.TaskInstance;
 import com.netease.mail.chronos.executor.support.service.NotifyService;
 import com.netease.mail.mp.api.notify.client.NotifyClient;
 import com.netease.mail.mp.api.notify.dto.GenericNotifyRequest;
@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.LocaleUtils;
 import org.springframework.stereotype.Service;
-import tech.powerjob.worker.log.OmsLogger;
 
 import java.util.*;
 
@@ -31,12 +30,20 @@ public class NotifyServiceImpl implements NotifyService {
     private static final int MESSAGE_TYPE_CN = 213;
 
     private static final int MESSAGE_TYPE_EN = 235;
+    /**
+     * 外域提醒
+     */
+    private static final int EXT_MESSAGE_TYPE_CN = 396;
+    /**
+     * 外域提醒
+     */
+    private static final int EXT_MESSAGE_TYPE_EN = 397;
 
 
     @Override
-    public boolean sendNotify(SpRtTaskInstance spRtTaskInstance) {
+    public boolean sendNotify(TaskInstance taskInstance, boolean external) {
         List<NotifyParamDTO> params = new ArrayList<>();
-        HashMap<String, Object> originParams = JSON.parseObject(spRtTaskInstance.getParam(), new TypeReference<HashMap<String, Object>>() {
+        HashMap<String, Object> originParams = JSON.parseObject(taskInstance.getParam(), new TypeReference<HashMap<String, Object>>() {
         });
         originParams.forEach((key, value) -> {
             NotifyParamDTO param;
@@ -51,15 +58,15 @@ public class NotifyServiceImpl implements NotifyService {
             params.add(param);
         });
         // 传递 expectedTriggerTime
-        NotifyParamDTO triggerTime = new NotifyParamDTO("expectedTriggerTime", String.valueOf(spRtTaskInstance.getExpectedTriggerTime()));
+        NotifyParamDTO triggerTime = new NotifyParamDTO("expectedTriggerTime", String.valueOf(taskInstance.getExpectedTriggerTime()));
         params.add(triggerTime);
 
         GenericNotifyRequest.Builder builder = GenericNotifyRequest.newBuilder();
-        builder.token(generateToken(spRtTaskInstance))
+        builder.token(generateToken(taskInstance))
                 .params(params)
-                .type(MESSAGE_TYPE_CN);
+                .type(external ? EXT_MESSAGE_TYPE_CN : MESSAGE_TYPE_CN);
         // 判断是否使用英文模板
-        String extra = spRtTaskInstance.getExtra();
+        String extra = taskInstance.getExtra();
         if (extra != null) {
             try {
                 Map<String, String> map = JSON.parseObject(extra, new TypeReference<Map<String, String>>() {
@@ -67,26 +74,26 @@ public class NotifyServiceImpl implements NotifyService {
                 String locale = map.get("locale");
                 Locale toLocale = LocaleUtils.toLocale(locale);
                 if (toLocale != null && Locale.ENGLISH.getLanguage().equals(toLocale.getLanguage())) {
-                    builder.type(MESSAGE_TYPE_EN);
+                    builder.type(external ? EXT_MESSAGE_TYPE_EN : MESSAGE_TYPE_EN);
                 }
             } catch (Exception e) {
                 log.error("解析任务语言失败，使用默认语言：中文", e);
             }
         }
         // 处理 uid ，这次的原始 uid 有可能是 muid 或者 uid
-        if (isRealUid(spRtTaskInstance.getCustomKey())) {
-            builder.uid(spRtTaskInstance.getCustomKey());
+        if (isRealUid(taskInstance.getCustomKey())) {
+            builder.uid(taskInstance.getCustomKey());
         } else {
-            builder.muid(spRtTaskInstance.getCustomKey());
+            builder.muid(taskInstance.getCustomKey());
         }
         StatusResult statusResult = notifyClient.notifyByDomain(builder.build());
         // 记录结果
-        spRtTaskInstance.setResult(JSON.toJSONString(statusResult));
+        taskInstance.setResult(JSON.toJSONString(statusResult));
         if (statusResult.getCode() != 200) {
-            log.error("处理提醒任务实例(id:{},compId:{},uid:{})失败,rtn = {}", spRtTaskInstance.getId(), spRtTaskInstance.getCustomId(), spRtTaskInstance.getCustomKey(), statusResult);
+            log.error("处理提醒任务实例(id:{},compId:{},uid:{})失败,rtn = {}", taskInstance.getId(), taskInstance.getCustomId(), taskInstance.getCustomKey(), statusResult);
             return false;
         }
-        log.info("处理提醒任务实例(id:{},compId:{},uid:{})成功,rtn = {}", spRtTaskInstance.getId(), spRtTaskInstance.getCustomId(), spRtTaskInstance.getCustomKey(), statusResult);
+        log.info("处理提醒任务实例(id:{},compId:{},uid:{})成功,rtn = {}", taskInstance.getId(), taskInstance.getCustomId(), taskInstance.getCustomKey(), statusResult);
         return true;
     }
 
@@ -103,10 +110,10 @@ public class NotifyServiceImpl implements NotifyService {
         }
     }
 
-    private String generateToken(SpRtTaskInstance spRtTaskInstance) {
+    private String generateToken(TaskInstance taskInstance) {
         // 根据 id 和 triggerTime 生成唯一 id
-        Long id = spRtTaskInstance.getId();
-        Long nextTriggerTime = spRtTaskInstance.getExpectedTriggerTime();
+        Long id = taskInstance.getId();
+        Long nextTriggerTime = taskInstance.getExpectedTriggerTime();
         return id + "#" + nextTriggerTime;
     }
 }
