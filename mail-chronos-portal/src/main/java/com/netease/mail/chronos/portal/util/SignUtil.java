@@ -1,7 +1,7 @@
 package com.netease.mail.chronos.portal.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.Md5Crypt;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -18,7 +18,7 @@ public class SignUtil {
 
     public static String genSign(List<String> keys){
         final String key = String.join(SP_KEY, keys);
-        return Md5Crypt.md5Crypt(key.getBytes(StandardCharsets.UTF_8));
+        return DigestUtils.md5Hex(key.getBytes(StandardCharsets.UTF_8));
     }
 
 }
