@@ -170,6 +170,7 @@ public abstract class AbstractTaskInstanceMapProcessor<T extends TaskInstance> i
             if (taskInstance != null) {
                 // 更新运行次数
                 taskInstance.setRunningTimes(taskInstance.getRunningTimes() + 1);
+                taskInstance.setUpdateTime(new Date());
                 // 如果这里失败了，本轮不重试，等下一轮调度
                 ExecuteUtil.executeIgnoreExceptionWithoutReturn(() -> updateTaskInstance(taskInstance), "update remind task instance:" + taskInstance.getId());
             }
