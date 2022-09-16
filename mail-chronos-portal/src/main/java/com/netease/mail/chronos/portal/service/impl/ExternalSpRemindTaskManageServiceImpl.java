@@ -57,11 +57,13 @@ public class ExternalSpRemindTaskManageServiceImpl implements ExternalSpRemindTa
         timeCostLog.put("device", device);
         timeCostLog.put("taskList", taskList);
 
-        if (taskList!= null && taskList.size() > maxExternalRemindTaskNum){
-            timeCostLog.put("msg","too many task");
+        if (taskList != null && taskList.size() > maxExternalRemindTaskNum) {
+            timeCostLog.put("msg", "too many task");
             log.warn("{}", timeCostLog);
             throw new BaseException(ExternalTaskBaseStatusEnum.TOO_MANY_TASK);
         }
+        // 检查任务
+        check(taskList);
         try {
             final List<SpExtRemindTaskInfo> originList = spExtRemindTaskInfoMapper.selectList(QueryWrapperUtil.construct(UID_COL_NAME, uid));
             timeCostLog.put("originTaskList", originList);
@@ -94,9 +96,27 @@ public class ExternalSpRemindTaskManageServiceImpl implements ExternalSpRemindTa
         }
     }
 
+    private void check(List<SimpleRemindTask> taskList) {
+        if (CollectionUtils.isEmpty(taskList)) {
+            return;
+        }
+        for (SimpleRemindTask simpleRemindTask : taskList) {
+            if (StringUtils.isBlank(simpleRemindTask.getCalId()) || StringUtils.isBlank(simpleRemindTask.getCompId())) {
+                throw new BaseException(ExternalTaskBaseStatusEnum.ILLEGAL_ARGUMENT);
+            }
+            if (StringUtils.isBlank(simpleRemindTask.getHref())) {
+                throw new BaseException(ExternalTaskBaseStatusEnum.ILLEGAL_ARGUMENT);
+            }
+            if (simpleRemindTask.getExpectTriggerTime() == null){
+                throw new BaseException(ExternalTaskBaseStatusEnum.ILLEGAL_ARGUMENT);
+            }
+        }
+
+    }
+
 
     @Override
-    public List<SimpleRemindTaskVo> list(String uid,Device device) {
+    public List<SimpleRemindTaskVo> list(String uid, Device device) {
         TimeCostLog timeCostLog = new TimeCostLog("cmd", "list");
         timeCostLog.put("uid", uid);
         timeCostLog.put("device", device);
@@ -138,11 +158,11 @@ public class ExternalSpRemindTaskManageServiceImpl implements ExternalSpRemindTa
         spExtRemindTaskInfo.setId(snowflake.nextId());
         spExtRemindTaskInfo.setUid(uid);
         spExtRemindTaskInfo.setFId(input.getId());
-        spExtRemindTaskInfo.setColId(input.getColId());
+        spExtRemindTaskInfo.setColId(input.getCalId());
         spExtRemindTaskInfo.setCompId(input.getCompId());
 
         final Params params = new Params();
-        params.setColId(input.getColId());
+        params.setColId(input.getCalId());
         params.setCompId(input.getCompId());
         params.setHref(input.getHref());
         params.setTitle(input.getTitle());

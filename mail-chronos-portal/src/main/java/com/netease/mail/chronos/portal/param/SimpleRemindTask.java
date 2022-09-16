@@ -19,7 +19,7 @@ public class SimpleRemindTask {
     /**
      * 集合 ID
      */
-    private String colId;
+    private String calId;
     /**
      * 组件 ID
      */
