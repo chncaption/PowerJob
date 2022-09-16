@@ -26,16 +26,28 @@ import java.util.*;
 public class NotifyServiceImpl implements NotifyService {
 
     private final NotifyClient notifyClient;
-
+    /**
+     * 内域，大师号
+     */
     private static final int MESSAGE_TYPE_CN = 213;
-
+    /**
+     * 内域，大师号
+     */
     private static final int MESSAGE_TYPE_EN = 235;
     /**
-     * 外域提醒
+     * 内域，邮箱
+     */
+    private static final int MESSAGE_TYPE_MAIL_CN = 398;
+    /**
+     * 内域，邮箱
+     */
+    private static final int MESSAGE_TYPE_MAIL_EN = 399;
+    /**
+     * 外域提醒，
      */
     private static final int EXT_MESSAGE_TYPE_CN = 396;
     /**
-     * 外域提醒
+     * 外域提醒，大师号
      */
     private static final int EXT_MESSAGE_TYPE_EN = 397;
 
@@ -64,22 +76,8 @@ public class NotifyServiceImpl implements NotifyService {
         GenericNotifyRequest.Builder builder = GenericNotifyRequest.newBuilder();
         builder.token(generateToken(taskInstance))
                 .params(params)
-                .type(external ? EXT_MESSAGE_TYPE_CN : MESSAGE_TYPE_CN);
-        // 判断是否使用英文模板
-        String extra = taskInstance.getExtra();
-        if (extra != null) {
-            try {
-                Map<String, String> map = JSON.parseObject(extra, new TypeReference<Map<String, String>>() {
-                });
-                String locale = map.get("locale");
-                Locale toLocale = LocaleUtils.toLocale(locale);
-                if (toLocale != null && Locale.ENGLISH.getLanguage().equals(toLocale.getLanguage())) {
-                    builder.type(external ? EXT_MESSAGE_TYPE_EN : MESSAGE_TYPE_EN);
-                }
-            } catch (Exception e) {
-                log.error("解析任务语言失败，使用默认语言：中文", e);
-            }
-        }
+                .type(chooseMsgType(external,taskInstance));
+
         // 处理 uid ，这次的原始 uid 有可能是 muid 或者 uid
         if (isRealUid(taskInstance.getCustomKey())) {
             builder.uid(taskInstance.getCustomKey());
@@ -95,6 +93,35 @@ public class NotifyServiceImpl implements NotifyService {
         }
         log.info("处理提醒任务实例(id:{},compId:{},uid:{})成功,rtn = {}", taskInstance.getId(), taskInstance.getCustomId(), taskInstance.getCustomKey(), statusResult);
         return true;
+    }
+
+    private int chooseMsgType(boolean external, TaskInstance taskInstance) {
+        // 判断是否使用英文模板
+        boolean useEn = false;
+        String extra = taskInstance.getExtra();
+        if (extra != null) {
+            try {
+                Map<String, String> map = JSON.parseObject(extra, new TypeReference<Map<String, String>>() {
+                });
+                String locale = map.get("locale");
+                Locale toLocale = LocaleUtils.toLocale(locale);
+                if (toLocale != null && Locale.ENGLISH.getLanguage().equals(toLocale.getLanguage())) {
+                    useEn = true;
+                }
+            } catch (Exception e) {
+                log.error("解析任务语言失败，使用默认语言：中文", e);
+            }
+
+        }
+        if (external){
+            return useEn ? EXT_MESSAGE_TYPE_EN : EXT_MESSAGE_TYPE_CN;
+        }
+        if (isRealUid(taskInstance.getCustomKey())){
+            return useEn ? MESSAGE_TYPE_MAIL_EN : MESSAGE_TYPE_MAIL_CN;
+        }else {
+            return useEn ? MESSAGE_TYPE_EN : MESSAGE_TYPE_CN;
+        }
+
     }
 
     private boolean isRealUid(String uid) {
