@@ -72,6 +72,9 @@ public class NotifyServiceImpl implements NotifyService {
         // 传递 expectedTriggerTime
         NotifyParamDTO triggerTime = new NotifyParamDTO("expectedTriggerTime", String.valueOf(taskInstance.getExpectedTriggerTime()));
         params.add(triggerTime);
+        // 传递 uid
+        NotifyParamDTO uid = new NotifyParamDTO("uid", String.valueOf(taskInstance.getCustomKey()));
+        params.add(uid);
 
         GenericNotifyRequest.Builder builder = GenericNotifyRequest.newBuilder();
         builder.token(generateToken(taskInstance))
