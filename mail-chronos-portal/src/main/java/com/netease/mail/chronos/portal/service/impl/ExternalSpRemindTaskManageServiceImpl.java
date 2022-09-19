@@ -162,7 +162,7 @@ public class ExternalSpRemindTaskManageServiceImpl implements ExternalSpRemindTa
         spExtRemindTaskInfo.setCompId(input.getCompId());
 
         final Params params = new Params();
-        params.setColId(input.getCalId());
+        params.setCalId(input.getCalId());
         params.setCompId(input.getCompId());
         params.setHref(input.getHref());
         params.setTitle(input.getTitle());
@@ -187,7 +187,7 @@ public class ExternalSpRemindTaskManageServiceImpl implements ExternalSpRemindTa
     @Data
     public static class Params {
 
-        private String colId;
+        private String calId;
 
         private String compId;
 
