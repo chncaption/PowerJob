@@ -2,6 +2,7 @@ package com.netease.mail.chronos.executor.support.processor;
 
 import cn.hutool.core.lang.Holder;
 import cn.hutool.core.lang.Snowflake;
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.netease.mail.chronos.base.utils.ExecuteUtil;
 import com.netease.mail.chronos.base.utils.ICalendarRecurrenceRuleUtil;
@@ -111,7 +112,20 @@ public class RemindTaskProcessor extends AbstractTaskMapProcessor<SpRemindTaskIn
         spRtTaskInstance.setTaskId(task.getId());
         spRtTaskInstance.setCustomId(task.getCompId());
         spRtTaskInstance.setCustomKey(task.getUid());
-        spRtTaskInstance.setParam(task.getParam());
+        // 这里需要特殊处理一下参数，计算距离第一次触发的偏移值
+        final String paramStr = task.getParam();
+        try {
+            Map<String, Object> paramMap = JacksonUtils.deserialize(paramStr, new TypeReference<Map<String, Object>>() {
+            });
+            // 计算偏移值
+            long firstTriggerTime = task.getStartTime() + task.getTriggerOffset();
+            long currentOffset = task.getNextTriggerTime() - firstTriggerTime;
+            paramMap.put("offset", currentOffset);
+            spRtTaskInstance.setParam(JacksonUtils.toString(paramMap));
+        } catch (Exception e) {
+            log.warn("处理任务偏移值失败,task detail:({})", task);
+            spRtTaskInstance.setParam(task.getParam());
+        }
         spRtTaskInstance.setExtra(task.getExtra());
         // 运行信息
         spRtTaskInstance.setRunningTimes(0);
