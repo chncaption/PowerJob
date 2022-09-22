@@ -40,6 +40,11 @@ public class RemindTaskProcessor extends AbstractTaskMapProcessor<SpRemindTaskIn
 
     private final SpTaskInstanceHandleServiceImpl spTaskInstanceHandleService;
 
+    private static final String DT_START = "dtStart";
+
+    private static final String DT_END = "dtEnd";
+
+    private static final String DT_START_TZ_ID = "dtStartTzId";
 
     @Override
     public String obtainDesc() {
@@ -120,6 +125,12 @@ public class RemindTaskProcessor extends AbstractTaskMapProcessor<SpRemindTaskIn
             long firstTriggerTime = task.getStartTime() + task.getTriggerOffset();
             long currentOffset = task.getNextTriggerTime() - firstTriggerTime;
             paramMap.put("offset", currentOffset);
+            // 兼容旧版本任务数据，后续可以去掉
+            if (paramMap.get(DT_START) == null && paramMap.get(DT_END) == null){
+                paramMap.put(DT_START, 0);
+                paramMap.put(DT_END, 0);
+            }
+            paramMap.computeIfAbsent(DT_START_TZ_ID, k -> task.getTimeZoneId());
             spRtTaskInstance.setParam(JacksonUtils.toString(paramMap));
         } catch (Exception e) {
             log.warn("处理任务偏移值失败,task detail:({})", task);
