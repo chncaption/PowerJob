@@ -331,7 +331,7 @@ public class SpRemindTaskManageServiceImpl implements SpRemindTaskManageService 
             return next;
         }
         // task.getExtra()
-        long nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateList(task.getRecurrenceRule(), task.getStartTime() + triggerOffset, now, parseExDateList(task),task.getTimeZoneId());
+        long nextValidTimeAfter = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateListWithOffset(task.getRecurrenceRule(), task.getStartTime(), triggerOffset, now, parseExDateList(task), task.getTimeZoneId());
         // 等于 0 表示不存在下一次触发时间
         if (nextValidTimeAfter == 0L) {
             // 不存在下一次调度时间

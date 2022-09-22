@@ -2,7 +2,6 @@ package com.netease.mail.chronos.executor.support.processor;
 
 import cn.hutool.core.lang.Holder;
 import cn.hutool.core.lang.Snowflake;
-import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.netease.mail.chronos.base.utils.ExecuteUtil;
 import com.netease.mail.chronos.base.utils.ICalendarRecurrenceRuleUtil;
@@ -163,7 +162,7 @@ public class RemindTaskProcessor extends AbstractTaskMapProcessor<SpRemindTaskIn
                 time = Math.max(System.currentTimeMillis(), spRemindTaskInfo.getNextTriggerTime());
             }
             // 更新 nextTriggerTime , 不处理 miss fire 的情形 （从业务场景上来说，没有必要）
-            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateList(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime() + spRemindTaskInfo.getTriggerOffset(), time, exDateList, spRemindTaskInfo.getTimeZoneId());
+            long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateListWithOffset(spRemindTaskInfo.getRecurrenceRule(), spRemindTaskInfo.getStartTime(), spRemindTaskInfo.getTriggerOffset(), time, exDateList, spRemindTaskInfo.getTimeZoneId());
             // 检查生命周期
             handleLifeCycle(spRemindTaskInfo, nextTriggerTime);
         } catch (Exception e) {

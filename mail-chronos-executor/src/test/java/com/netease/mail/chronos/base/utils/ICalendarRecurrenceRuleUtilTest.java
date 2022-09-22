@@ -20,19 +20,22 @@ class ICalendarRecurrenceRuleUtilTest {
     @SneakyThrows
     void calculateNextTriggerTime() {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date date2 = simpleDateFormat.parse("2021-09-29 20:00:00");
-        Date date1 = simpleDateFormat.parse("2021-09-30 01:00:00");
+        Date seedTime = simpleDateFormat.parse("2021-09-29 20:00:00");
+        Date startTime = simpleDateFormat.parse("2021-09-30 01:00:00");
 
-        long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime("FREQ=MINUTELY;INTERVAL=60;COUNT=24;UNTIL=20210930T010000Z", date2.getTime(), date1.getTime());
+        long nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTime("FREQ=MINUTELY;INTERVAL=60;COUNT=24;UNTIL=20210930T010000Z", seedTime.getTime(), startTime.getTime());
         System.out.println(nextTriggerTime);
         System.out.println(simpleDateFormat.format(nextTriggerTime));
 
-
-        nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateStrList("FREQ=MINUTELY;INTERVAL=60;COUNT=24;UNTIL=20210930T010000Z", date2.getTime(), date1.getTime(),
-                Arrays.asList("20210930", "20210930T050000,20210930T060000"));
+        nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateStrList("FREQ=MINUTELY;INTERVAL=60;COUNT=24;UNTIL=20210930T010000Z", seedTime.getTime(), startTime.getTime(),
+                Arrays.asList("20210930", "20210929T180000Z","20210930T030000"));
         System.out.println(nextTriggerTime);
         System.out.println(simpleDateFormat.format(nextTriggerTime));
-        System.out.println(System.currentTimeMillis());
+
+        nextTriggerTime = ICalendarRecurrenceRuleUtil.calculateNextTriggerTimeExDateListWithOffset("FREQ=MINUTELY;INTERVAL=60;COUNT=24;UNTIL=20210930T010000Z", seedTime.getTime(),-60000, startTime.getTime(),
+                Arrays.asList("20210930", "20210930T020000","20210930T030000"), "Asia/Shanghai");
+        System.out.println(nextTriggerTime);
+        System.out.println(simpleDateFormat.format(nextTriggerTime));
     }
 
 

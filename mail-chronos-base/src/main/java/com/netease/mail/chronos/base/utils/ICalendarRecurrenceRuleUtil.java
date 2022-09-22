@@ -56,9 +56,22 @@ public class ICalendarRecurrenceRuleUtil {
         return nextTriggerTime;
     }
 
+    @SneakyThrows
+    public static long calculateNextTriggerTimeExDateListWithOffset(String recurrenceRule, long seedTime, long triggerOffset, long startTime, List<String> exDateList, String tzId) {
+        long seedTimeWithOffset = seedTime + triggerOffset;
+        long nextTriggerTime = calculateNextTriggerTime(recurrenceRule, seedTimeWithOffset, startTime);
+        if (nextTriggerTime == 0L || CollUtil.isEmpty(exDateList)) {
+            return nextTriggerTime;
+        }
+        final List<Date> dates = toDateList(exDateList, tzId);
+        // 参考 net.fortuna.ical4j.model.Component.calculateRecurrenceSet 中的处理逻辑
+        while (dates.contains(new DateTime(nextTriggerTime - triggerOffset)) || dates.contains(new Date(nextTriggerTime - triggerOffset))) {
+            nextTriggerTime = calculateNextTriggerTime(recurrenceRule, seedTimeWithOffset, nextTriggerTime);
+        }
+        return nextTriggerTime;
+    }
 
-
-    public static List<net.fortuna.ical4j.model.Date> toDateList(List<String> exDateList, String tzId){
+    public static List<net.fortuna.ical4j.model.Date> toDateList(List<String> exDateList, String tzId) {
 
         try {
             List<net.fortuna.ical4j.model.Date> dateList = new LinkedList<>();
