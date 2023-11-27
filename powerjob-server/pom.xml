@@ -27,7 +27,7 @@
 
     <properties>
         <swagger.version>2.9.2</swagger.version>
-        <springboot.version>2.7.4</springboot.version>
+        <springboot.version>3.2.0</springboot.version>
         <powerjob.common.version>4.2.0</powerjob.common.version>
         <!-- MySQL version that corresponds to spring-boot-dependencies version. -->
         <mysql.version>8.0.28</mysql.version>
@@ -38,7 +38,7 @@
         <h2.db.version>1.4.200</h2.db.version>
 
         <zip4j.version>2.5.2</zip4j.version>
-        <jgit.version>5.7.0.202003110725-r</jgit.version>
+        <jgit.version>5.8.0.202006091008-r</jgit.version>
         <mvn.invoker.version>3.0.1</mvn.invoker.version>
         <commons.net.version>3.6</commons.net.version>
         <fastjson.version>1.2.83</fastjson.version>
