@@ -43,7 +43,7 @@
         <commons.net.version>3.6</commons.net.version>
         <fastjson.version>1.2.83</fastjson.version>
         <dingding.version>1.0.1</dingding.version>
-        <vertx-web.version>4.0.2</vertx-web.version>
+        <vertx-web.version>4.5.6</vertx-web.version>
 
         <!-- skip this module when deploying. -->
         <maven.deploy.skip>true</maven.deploy.skip>
