@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <powerjob.worker.version>4.2.0</powerjob.worker.version>
+        <powerjob.worker.version>5.1.0</powerjob.worker.version>
         <springboot.version>2.7.4</springboot.version>
     </properties>
 
