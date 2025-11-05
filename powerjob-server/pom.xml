@@ -32,7 +32,7 @@
         <!-- MySQL version that corresponds to spring-boot-dependencies version. -->
         <mysql.version>8.0.28</mysql.version>
         <ojdbc.version>19.7.0.0</ojdbc.version>
-        <mssql-jdbc.version>7.4.1.jre8</mssql-jdbc.version>
+        <mssql-jdbc.version>10.2.4.jre8</mssql-jdbc.version>
         <db2-jdbc.version>11.5.0.0</db2-jdbc.version>
         <postgresql.version>42.2.14</postgresql.version>
         <h2.db.version>1.4.200</h2.db.version>
